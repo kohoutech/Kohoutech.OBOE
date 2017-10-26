@@ -28,7 +28,6 @@ namespace Origami.Windows
     {
         const uint IMAGE_SCN_CNT_CODE = 0x00000020;
 
-        protected Fluoroscope fluoro;
         protected SourceFile source;
 
         public uint imageBase;
@@ -44,9 +43,9 @@ namespace Origami.Windows
         public uint[] sourceBuf;
 
 //using a factory method becuase we don't know what type of section it is until we read the section header
-        public static Section getSection(Fluoroscope _fluoro, int _secnum, uint _imageBase) 
+        public static Section getSection(SourceFile _source, int _secnum, uint _imageBase) 
         {
-            SourceFile source = _fluoro.source;
+            SourceFile source = _source;
             String sectionName = source.getString(8);            
             uint memsize = source.getFour();
             uint memloc = source.getFour();
@@ -60,23 +59,22 @@ namespace Origami.Windows
             Section result;
             if ((flags & IMAGE_SCN_CNT_CODE) != 0)
             {
-                result = new CodeSection(_fluoro, _secnum, sectionName, memsize, memloc,
+                result = new CodeSection(source, _secnum, sectionName, memsize, memloc,
                     filesize, fileloc, flags, _imageBase);
             }
             else
             {
-                result = new DataSection(_fluoro, _secnum, sectionName, memsize, memloc,
+                result = new DataSection(source, _secnum, sectionName, memsize, memloc,
                     filesize, fileloc, flags, _imageBase);
             }
 
             return result;
         }
 
-        public Section(Fluoroscope _fluoro, int _secnum, String _sectionName, uint _memsize, 
+        public Section(SourceFile _source, int _secnum, String _sectionName, uint _memsize, 
                 uint _memloc, uint _filesize, uint _fileloc, uint _flags, uint _imagebase)
         {
-            fluoro = _fluoro;
-            source = fluoro.source;
+            source = _source;
             imageBase = _imagebase;
             secNum = _secnum;
             sectionName = _sectionName;

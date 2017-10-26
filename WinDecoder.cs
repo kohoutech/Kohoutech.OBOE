@@ -29,14 +29,20 @@ namespace Origami.Windows
         public SourceFile source;
         public WindowsParser parser;
         String outname;
+
+        public PEHeader peHeader;
+        public OptionalHeader optionalHeader;
         public List<Section> sections;
         CodeSection codesection;
 
-        public WinDecoder()
+        public WinDecoder(SourceFile _source)
         {
-            source = null;
-            parser = null;
+            source = _source;
+            parser = new WindowsParser(this);
             outname = "out.code.txt";
+
+            peHeader = null;
+            optionalHeader = null;
             sections = new List<Section>();
         }
 
@@ -47,7 +53,6 @@ namespace Origami.Windows
 
         public void parse()
         {
-            parser = new WindowsParser(this);
             parser.parse();                         //parse win hdr + get section list
         }
 

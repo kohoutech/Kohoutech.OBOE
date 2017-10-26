@@ -33,9 +33,9 @@ namespace Origami.Windows
         i32Disasm disasm;
         List<String> codeList;
 
-        public CodeSection(Fluoroscope _fluoro, int _secnum, String _sectionName, uint _memsize,
+        public CodeSection(SourceFile source, int _secnum, String _sectionName, uint _memsize,
                 uint _memloc, uint _filesize, uint _fileloc, uint _flags, uint _imageBase)
-            : base(_fluoro, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc,
+            : base(source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc,
                 _flags, _imageBase)
         {
             Console.Out.WriteLine("[" + _secnum + "] is a code section");

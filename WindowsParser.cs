@@ -53,106 +53,13 @@ namespace Origami.Windows
             
         }
 
-        public void loadPEHeader()
-        {
-            uint pesig = source.getFour();
-            Console.Out.WriteLine("PE sig = " + pesig);
-            uint machine = source.getTwo();
-            sectionCount = source.getTwo();
-            uint timeStamp = source.getFour();
-            uint pSymbolTable = source.getFour();
-            uint symbolcount = source.getFour();
-            uint optionalHeaderSize = source.getTwo();
-            uint characteristics = source.getTwo();
-
-            Console.Out.WriteLine("machine = " + machine);
-            Console.Out.WriteLine("sectioncount = " + sectionCount);
-            Console.Out.WriteLine("timestamp = " + timeStamp);
-            Console.Out.WriteLine("symbol tbl ptr = " + pSymbolTable);
-            Console.Out.WriteLine("symbol count = " + symbolcount);
-            Console.Out.WriteLine("optional header size = " + optionalHeaderSize);
-            Console.Out.WriteLine("characteristics = " + characteristics);
-            
-        }
-
-        public void loadOptionalHeader()
-        {
-            uint signature = source.getTwo();
-            uint MajorLinkerVersion = source.getOne();
-            uint MinorLinkerVersion = source.getOne();
-            uint SizeOfCode = source.getFour();
-            uint SizeOfInitializedData = source.getFour();
-            uint SizeOfUninitializedData = source.getFour();
-            uint AddressOfEntryPoint = source.getFour();
-            uint BaseOfCode = source.getFour();
-            uint BaseOfData = source.getFour();
-            imageBase = source.getFour();
-            uint SectionAlignment = source.getFour();
-            uint FileAlignment = source.getFour();
-            uint MajorOSVersion = source.getTwo();
-            uint MinorOSVersion = source.getTwo();
-            uint MajorImageVersion = source.getTwo();
-            uint MinorImageVersion = source.getTwo();
-            uint MajorSubsystemVersion = source.getTwo();
-            uint MinorSubsystemVersion = source.getTwo();
-            uint Win32VersionValue = source.getFour();
-            uint SizeOfImage = source.getFour();
-            uint SizeOfHeaders = source.getFour();
-            uint Checksum = source.getFour();
-            uint Subsystem = source.getTwo();
-            uint DLLCharacteristics = source.getTwo();
-            uint SizeOfStackReserve = source.getFour();
-            uint SizeOfStackCommit = source.getFour();
-            uint SizeOfHeapReserve = source.getFour();
-            uint SizeOfHeapCommit = source.getFour();
-            uint LoaderFlags = source.getFour();
-            uint NumberOfRvaAndSizes = source.getFour();
-
-            Console.Out.WriteLine("signature = " + signature);
-            Console.Out.WriteLine("MajorLinkerVersion = " + MajorLinkerVersion);
-            Console.Out.WriteLine("MinorLinkerVersion = " + MinorLinkerVersion);
-            Console.Out.WriteLine("SizeOfCode = " + SizeOfCode);
-            Console.Out.WriteLine("SizeOfInitializedData = " + SizeOfInitializedData);
-            Console.Out.WriteLine("SizeOfUninitializedData = " + SizeOfUninitializedData);
-            Console.Out.WriteLine("AddressOfEntryPoint = " + AddressOfEntryPoint);
-            Console.Out.WriteLine("BaseOfCode = " + BaseOfCode);
-            Console.Out.WriteLine("BaseOfData = " + BaseOfData);
-            Console.Out.WriteLine("ImageBase = " + imageBase.ToString("X"));
-            Console.Out.WriteLine("SectionAlignment = " + SectionAlignment);
-            Console.Out.WriteLine("FileAlignment = " + FileAlignment);
-            Console.Out.WriteLine("MajorOSVersion = " + MajorOSVersion);
-            Console.Out.WriteLine("MinorOSVersion = " + MinorOSVersion);
-            Console.Out.WriteLine("MajorImageVersion = " + MajorImageVersion);
-            Console.Out.WriteLine("MinorImageVersion = " + MinorImageVersion);
-            Console.Out.WriteLine("MajorSubsystemVersion = " + MajorSubsystemVersion);
-            Console.Out.WriteLine("MinorSubsystemVersion = " + MinorSubsystemVersion);
-            Console.Out.WriteLine("Win32VersionValue = " + Win32VersionValue);
-            Console.Out.WriteLine("SizeOfImage = " + SizeOfImage);
-            Console.Out.WriteLine("SizeOfHeaders = " + SizeOfHeaders);
-            Console.Out.WriteLine("Checksum = " + Checksum);
-            Console.Out.WriteLine("Subsystem = " + Subsystem);
-            Console.Out.WriteLine("DLLCharacteristics = " + DLLCharacteristics);
-            Console.Out.WriteLine("SizeOfStackReserve = " + SizeOfStackReserve);
-            Console.Out.WriteLine("SizeOfStackCommit = " + SizeOfStackCommit);
-            Console.Out.WriteLine("SizeOfHeapReserve = " + SizeOfHeapReserve);
-            Console.Out.WriteLine("SizeOfHeapCommit = " + SizeOfHeapCommit);
-            Console.Out.WriteLine("LoaderFlags = " + LoaderFlags);
-            Console.Out.WriteLine("NumberOfRvaAndSizes = " + NumberOfRvaAndSizes);
-
-            uint[] dataDirectory = new uint[NumberOfRvaAndSizes * 2];
-            for (int i = 0; i < NumberOfRvaAndSizes; i++)
-            {
-                dataDirectory[i * 2] = source.getFour();
-                dataDirectory[(i * 2) + 1] = source.getFour();
-            }
-        }
 
         public void loadSectionTable()
         {
             sections = new Section[sectionCount];
             for (int i = 0; i < sectionCount; i++)
             {
-                sections[i] = Section.getSection(fluoro, i + 1, imageBase);
+                sections[i] = Section.getSection(source, i + 1, imageBase);
             }
         }
 
@@ -161,9 +68,156 @@ namespace Origami.Windows
         public void parse()
         {
             skipMSDOSHeader();
-            loadPEHeader();
-            loadOptionalHeader();
+            decoder.peHeader = PEHeader.load(source);
+            decoder.optionalHeader = OptionalHeader.load(source);
             loadSectionTable();
         }
+    }
+
+    class PEHeader
+    {
+        uint pesig;
+        uint machine;
+        uint sectionCount;
+        uint timeStamp;
+        uint pSymbolTable;
+        uint symbolcount;
+        uint optionalHeaderSize;
+        uint characteristics;
+
+        static public PEHeader load(SourceFile source)
+        {
+            PEHeader header = new PEHeader();
+
+            header.pesig = source.getFour();
+            header.machine = source.getTwo();
+            header.sectionCount = source.getTwo();
+            header.timeStamp = source.getFour();
+            header.pSymbolTable = source.getFour();
+            header.symbolcount = source.getFour();
+            header.optionalHeaderSize = source.getTwo();
+            header.characteristics = source.getTwo();
+
+            return header;
+        }
+
+            //Console.Out.WriteLine("machine = " + machine);
+            //Console.Out.WriteLine("sectioncount = " + sectionCount);
+            //Console.Out.WriteLine("timestamp = " + timeStamp);
+            //Console.Out.WriteLine("symbol tbl ptr = " + pSymbolTable);
+            //Console.Out.WriteLine("symbol count = " + symbolcount);
+            //Console.Out.WriteLine("optional header size = " + optionalHeaderSize);
+            //Console.Out.WriteLine("characteristics = " + characteristics);
+    }
+
+    class OptionalHeader
+    {
+        uint signature;
+        uint MajorLinkerVersion;
+        uint MinorLinkerVersion;
+        uint SizeOfCode;
+        uint SizeOfInitializedData;
+        uint SizeOfUninitializedData;
+        uint AddressOfEntryPoint;
+        uint BaseOfCode;
+        uint BaseOfData;
+        uint imageBase;
+        uint SectionAlignment;
+        uint FileAlignment;
+        uint MajorOSVersion;
+        uint MinorOSVersion;
+        uint MajorImageVersion;
+        uint MinorImageVersion;
+        uint MajorSubsystemVersion;
+        uint MinorSubsystemVersion;
+        uint Win32VersionValue;
+        uint SizeOfImage;
+        uint SizeOfHeaders;
+        uint Checksum;
+        uint Subsystem;
+        uint DLLCharacteristics;
+        uint SizeOfStackReserve;
+        uint SizeOfStackCommit;
+        uint SizeOfHeapReserve;
+        uint SizeOfHeapCommit;
+        uint LoaderFlags;
+        uint NumberOfRvaAndSizes;
+
+        uint[] dataDirectory;
+
+        static public OptionalHeader load(SourceFile source)
+        {
+            OptionalHeader header = new OptionalHeader();
+            header.signature = source.getTwo();
+            header.MajorLinkerVersion = source.getOne();
+            header.MinorLinkerVersion = source.getOne();
+            header.SizeOfCode = source.getFour();
+            header.SizeOfInitializedData = source.getFour();
+            header.SizeOfUninitializedData = source.getFour();
+            header.AddressOfEntryPoint = source.getFour();
+            header.BaseOfCode = source.getFour();
+            header.BaseOfData = source.getFour();
+            header.imageBase = source.getFour();
+            header.SectionAlignment = source.getFour();
+            header.FileAlignment = source.getFour();
+            header.MajorOSVersion = source.getTwo();
+            header.MinorOSVersion = source.getTwo();
+            header.MajorImageVersion = source.getTwo();
+            header.MinorImageVersion = source.getTwo();
+            header.MajorSubsystemVersion = source.getTwo();
+            header.MinorSubsystemVersion = source.getTwo();
+            header.Win32VersionValue = source.getFour();
+            header.SizeOfImage = source.getFour();
+            header.SizeOfHeaders = source.getFour();
+            header.Checksum = source.getFour();
+            header.Subsystem = source.getTwo();
+            header.DLLCharacteristics = source.getTwo();
+            header.SizeOfStackReserve = source.getFour();
+            header.SizeOfStackCommit = source.getFour();
+            header.SizeOfHeapReserve = source.getFour();
+            header.SizeOfHeapCommit = source.getFour();
+            header.LoaderFlags = source.getFour();
+            header.NumberOfRvaAndSizes = source.getFour();
+
+            header.dataDirectory = new uint[header.NumberOfRvaAndSizes * 2];
+            for (int i = 0; i < header.NumberOfRvaAndSizes; i++)
+            {
+                header.dataDirectory[i * 2] = source.getFour();
+                header.dataDirectory[(i * 2) + 1] = source.getFour();
+            }
+
+            return header;
+        }
+
+        //Console.Out.WriteLine("signature = " + signature);
+        //Console.Out.WriteLine("MajorLinkerVersion = " + MajorLinkerVersion);
+        //Console.Out.WriteLine("MinorLinkerVersion = " + MinorLinkerVersion);
+        //Console.Out.WriteLine("SizeOfCode = " + SizeOfCode);
+        //Console.Out.WriteLine("SizeOfInitializedData = " + SizeOfInitializedData);
+        //Console.Out.WriteLine("SizeOfUninitializedData = " + SizeOfUninitializedData);
+        //Console.Out.WriteLine("AddressOfEntryPoint = " + AddressOfEntryPoint);
+        //Console.Out.WriteLine("BaseOfCode = " + BaseOfCode);
+        //Console.Out.WriteLine("BaseOfData = " + BaseOfData);
+        //Console.Out.WriteLine("ImageBase = " + imageBase.ToString("X"));
+        //Console.Out.WriteLine("SectionAlignment = " + SectionAlignment);
+        //Console.Out.WriteLine("FileAlignment = " + FileAlignment);
+        //Console.Out.WriteLine("MajorOSVersion = " + MajorOSVersion);
+        //Console.Out.WriteLine("MinorOSVersion = " + MinorOSVersion);
+        //Console.Out.WriteLine("MajorImageVersion = " + MajorImageVersion);
+        //Console.Out.WriteLine("MinorImageVersion = " + MinorImageVersion);
+        //Console.Out.WriteLine("MajorSubsystemVersion = " + MajorSubsystemVersion);
+        //Console.Out.WriteLine("MinorSubsystemVersion = " + MinorSubsystemVersion);
+        //Console.Out.WriteLine("Win32VersionValue = " + Win32VersionValue);
+        //Console.Out.WriteLine("SizeOfImage = " + SizeOfImage);
+        //Console.Out.WriteLine("SizeOfHeaders = " + SizeOfHeaders);
+        //Console.Out.WriteLine("Checksum = " + Checksum);
+        //Console.Out.WriteLine("Subsystem = " + Subsystem);
+        //Console.Out.WriteLine("DLLCharacteristics = " + DLLCharacteristics);
+        //Console.Out.WriteLine("SizeOfStackReserve = " + SizeOfStackReserve);
+        //Console.Out.WriteLine("SizeOfStackCommit = " + SizeOfStackCommit);
+        //Console.Out.WriteLine("SizeOfHeapReserve = " + SizeOfHeapReserve);
+        //Console.Out.WriteLine("SizeOfHeapCommit = " + SizeOfHeapCommit);
+        //Console.Out.WriteLine("LoaderFlags = " + LoaderFlags);
+        //Console.Out.WriteLine("NumberOfRvaAndSizes = " + NumberOfRvaAndSizes);
     }
 }
