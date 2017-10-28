@@ -24,7 +24,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.IO;
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
     
     class CodeSection : Section
@@ -34,9 +34,10 @@ namespace Origami.Windows
         List<String> codeList;
 
         public CodeSection(SourceFile source, int _secnum, String _sectionName, uint _memsize,
-                uint _memloc, uint _filesize, uint _fileloc, uint _flags, uint _imageBase)
-            : base(source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc,
-                _flags, _imageBase)
+                uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
+            int _relocCount, int _linenumCount, uint _flags, uint _imageBase)
+            : base(source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
+            _relocCount, _linenumCount, _flags, _imageBase)
         {
             Console.Out.WriteLine("[" + _secnum + "] is a code section");
         }

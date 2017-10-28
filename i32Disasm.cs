@@ -25,7 +25,7 @@ using System.Text;
 //http://ref.x86asm.net/coder32.html - opcode table
 //http://wiki.osdev.org/X86-64_Instruction_Encoding - prefix information
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
     class i32Disasm
     {

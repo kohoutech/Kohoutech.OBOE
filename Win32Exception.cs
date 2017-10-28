@@ -22,11 +22,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
-    class FluoroException : Exception
+    class Win32Exception : Exception
     {
-        public FluoroException(string message)
+        public Win32Exception(string message)
             : base(message)
         {
         }

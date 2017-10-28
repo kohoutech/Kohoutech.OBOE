@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
     class Section
     {
@@ -33,46 +33,56 @@ namespace Origami.Windows
         public uint imageBase;
         public int secNum;
         public String sectionName;
-        public uint memloc;
-        public uint memsize;
 
-        protected uint fileloc;             //section file location
-        protected uint filesize;            //section file size
-        protected uint flags;
+        public uint memloc;                 //section addr in memory
+        public uint memsize;                //section size in memory
+        public uint fileloc;             //section addr in file
+        public uint filesize;            //section size in file
+
+        public uint pRelocations;
+        public uint pLinenums;
+        public int relocCount;
+        public int linenumCount;
+
+        public uint flags;
 
         public uint[] sourceBuf;
 
-//using a factory method becuase we don't know what type of section it is until we read the section header
+//using a factory method because we don't know what type of section it is until we read the section header
         public static Section getSection(SourceFile _source, int _secnum, uint _imageBase) 
         {
             SourceFile source = _source;
-            String sectionName = source.getString(8);            
+            String sectionName = source.getString(8);   
+         
             uint memsize = source.getFour();
             uint memloc = source.getFour();
             uint filesize = source.getFour();
             uint fileloc = source.getFour();
-            uint res1 = source.getFour();
-            uint res2 = source.getFour();
-            uint res3 = source.getFour();
+
+            uint prelocations = source.getFour();
+            uint plinenums = source.getFour();
+            int reloccount = (int) source.getTwo();
+            int linenumcount = (int) source.getTwo();
             uint flags = source.getFour();
 
             Section result;
             if ((flags & IMAGE_SCN_CNT_CODE) != 0)
             {
                 result = new CodeSection(source, _secnum, sectionName, memsize, memloc,
-                    filesize, fileloc, flags, _imageBase);
+                    filesize, fileloc, prelocations, plinenums, reloccount, linenumcount, flags, _imageBase);
             }
             else
             {
                 result = new DataSection(source, _secnum, sectionName, memsize, memloc,
-                    filesize, fileloc, flags, _imageBase);
+                    filesize, fileloc, prelocations, plinenums, reloccount, linenumcount, flags, _imageBase);
             }
 
             return result;
         }
 
         public Section(SourceFile _source, int _secnum, String _sectionName, uint _memsize, 
-                uint _memloc, uint _filesize, uint _fileloc, uint _flags, uint _imagebase)
+                uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
+            int _relocCount, int _linenumCount, uint _flags, uint _imagebase)
         {
             source = _source;
             imageBase = _imagebase;
@@ -82,14 +92,18 @@ namespace Origami.Windows
             memloc = _memloc;
             filesize = _filesize;
             fileloc = _fileloc;
+            pRelocations = _pRelocations;
+            pLinenums = _pLinenums;
+            relocCount = _relocCount;
+            linenumCount = _linenumCount;
             flags = _flags;
 
-            Console.Out.WriteLine("[" + secNum + "] sectionName = " + sectionName);
-            Console.Out.WriteLine("[" + secNum + "] memsize = " + memsize.ToString("X"));
-            Console.Out.WriteLine("[" + secNum + "] memloc = " + memloc.ToString("X"));
-            Console.Out.WriteLine("[" + secNum + "] filesize = " + filesize.ToString("X"));
-            Console.Out.WriteLine("[" + secNum + "] fileloc = " + fileloc.ToString("X"));
-            Console.Out.WriteLine("[" + secNum + "] flags = " + flags.ToString("X"));
+            //Console.Out.WriteLine("[" + secNum + "] sectionName = " + sectionName);
+            //Console.Out.WriteLine("[" + secNum + "] memsize = " + memsize.ToString("X"));
+            //Console.Out.WriteLine("[" + secNum + "] memloc = " + memloc.ToString("X"));
+            //Console.Out.WriteLine("[" + secNum + "] filesize = " + filesize.ToString("X"));
+            //Console.Out.WriteLine("[" + secNum + "] fileloc = " + fileloc.ToString("X"));
+            //Console.Out.WriteLine("[" + secNum + "] flags = " + flags.ToString("X"));
 
             sourceBuf = null;
         }

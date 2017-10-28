@@ -22,12 +22,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
-    class WinDecoder
+    class Win32Decoder
     {
         public SourceFile source;
-        public WindowsParser parser;
+        public Win32Parser parser;
         String outname;
 
         public PEHeader peHeader;
@@ -35,15 +35,15 @@ namespace Origami.Windows
         public List<Section> sections;
         CodeSection codesection;
 
-        public WinDecoder(SourceFile _source)
+        public Win32Decoder(SourceFile _source)
         {
             source = _source;
-            parser = new WindowsParser(this);
+            parser = new Win32Parser(this);
             outname = "out.code.txt";
 
             peHeader = null;
             optionalHeader = null;
-            sections = new List<Section>();
+            sections = null;
         }
 
         public void setSourceFile(SourceFile _source) 

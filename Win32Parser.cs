@@ -24,18 +24,14 @@ using System.Text;
 
 //https://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
-    class WindowsParser
+    class Win32Parser
     {
-        WinDecoder decoder;
+        Win32Decoder decoder;
         SourceFile source;
 
-        uint imageBase;
-        uint sectionCount;
-        public Section[] sections;
-
-        public WindowsParser(WinDecoder _decoder)
+        public Win32Parser(Win32Decoder _decoder)
         {
             decoder = _decoder;
             source = decoder.source;
@@ -43,27 +39,26 @@ namespace Origami.Windows
 
 //-----------------------------------------------------------------------------
 
+        //is there anything worth keeping from the DOS header anymore?
         public void skipMSDOSHeader()
         {
             uint e_magic = source.getFour();
             source.seek(0x3c);
             uint e_lfanew = source.getFour();
-            Console.Out.WriteLine("PE offset = " + e_lfanew);
-            source.seek(e_lfanew);
-            
+            source.seek(e_lfanew);            
         }
-
 
         public void loadSectionTable()
         {
-            sections = new Section[sectionCount];
+            int sectionCount = decoder.peHeader.sectionCount;
+            uint imageBase = decoder.optionalHeader.imageBase;
+
+            decoder.sections = new List<Section>(sectionCount);
             for (int i = 0; i < sectionCount; i++)
             {
-                sections[i] = Section.getSection(source, i + 1, imageBase);
+                decoder.sections.Add(Section.getSection(source, i + 1, imageBase));
             }
         }
-
-//-----------------------------------------------------------------------------
 
         public void parse()
         {
@@ -74,16 +69,18 @@ namespace Origami.Windows
         }
     }
 
+//-----------------------------------------------------------------------------
+
     class PEHeader
     {
-        uint pesig;
-        uint machine;
-        uint sectionCount;
-        uint timeStamp;
-        uint pSymbolTable;
-        uint symbolcount;
-        uint optionalHeaderSize;
-        uint characteristics;
+        public uint pesig;
+        public uint machine;
+        public int sectionCount;
+        public uint timeStamp;
+        public uint pSymbolTable;
+        public uint symbolcount;
+        public uint optionalHeaderSize;
+        public uint characteristics;
 
         static public PEHeader load(SourceFile source)
         {
@@ -91,7 +88,7 @@ namespace Origami.Windows
 
             header.pesig = source.getFour();
             header.machine = source.getTwo();
-            header.sectionCount = source.getTwo();
+            header.sectionCount = (int)source.getTwo();
             header.timeStamp = source.getFour();
             header.pSymbolTable = source.getFour();
             header.symbolcount = source.getFour();
@@ -112,38 +109,37 @@ namespace Origami.Windows
 
     class OptionalHeader
     {
-        uint signature;
-        uint MajorLinkerVersion;
-        uint MinorLinkerVersion;
-        uint SizeOfCode;
-        uint SizeOfInitializedData;
-        uint SizeOfUninitializedData;
-        uint AddressOfEntryPoint;
-        uint BaseOfCode;
-        uint BaseOfData;
-        uint imageBase;
-        uint SectionAlignment;
-        uint FileAlignment;
-        uint MajorOSVersion;
-        uint MinorOSVersion;
-        uint MajorImageVersion;
-        uint MinorImageVersion;
-        uint MajorSubsystemVersion;
-        uint MinorSubsystemVersion;
-        uint Win32VersionValue;
-        uint SizeOfImage;
-        uint SizeOfHeaders;
-        uint Checksum;
-        uint Subsystem;
-        uint DLLCharacteristics;
-        uint SizeOfStackReserve;
-        uint SizeOfStackCommit;
-        uint SizeOfHeapReserve;
-        uint SizeOfHeapCommit;
-        uint LoaderFlags;
-        uint NumberOfRvaAndSizes;
-
-        uint[] dataDirectory;
+        public uint signature;
+        public uint MajorLinkerVersion;
+        public uint MinorLinkerVersion;
+        public uint SizeOfCode;
+        public uint SizeOfInitializedData;
+        public uint SizeOfUninitializedData;
+        public uint AddressOfEntryPoint;
+        public uint BaseOfCode;
+        public uint BaseOfData;
+        public uint imageBase;
+        public uint SectionAlignment;
+        public uint FileAlignment;
+        public uint MajorOSVersion;
+        public uint MinorOSVersion;
+        public uint MajorImageVersion;
+        public uint MinorImageVersion;
+        public uint MajorSubsystemVersion;
+        public uint MinorSubsystemVersion;
+        public uint Win32VersionValue;
+        public uint SizeOfImage;
+        public uint SizeOfHeaders;
+        public uint Checksum;
+        public uint Subsystem;
+        public uint DLLCharacteristics;
+        public uint SizeOfStackReserve;
+        public uint SizeOfStackCommit;
+        public uint SizeOfHeapReserve;
+        public uint SizeOfHeapCommit;
+        public uint LoaderFlags;
+        public uint NumberOfRvaAndSizes;
+        public uint[] dataDirectory;
 
         static public OptionalHeader load(SourceFile source)
         {

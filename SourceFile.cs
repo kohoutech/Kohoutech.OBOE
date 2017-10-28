@@ -23,7 +23,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Origami.Windows
+namespace Origami.Win32
 {
     class SourceFile
     {
@@ -78,6 +78,7 @@ namespace Origami.Windows
             return result;
         }
 
+        //fixed len string
         public String getString(int width)
         {
             String result = "";
