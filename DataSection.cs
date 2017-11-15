@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -22,17 +22,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+//doesn't do much at the moment other than being a section subclass that is NOT a code section
+//may be expanded in the future
+
 namespace Origami.Win32
 {
     class DataSection : Section
     {
-        public DataSection(SourceFile source, int _secnum, String _sectionName, uint _memsize,
+        public DataSection(Win32Decoder decoder, SourceFile source, int _secnum, String _sectionName, uint _memsize,
                 uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
-            int _relocCount, int _linenumCount, uint _flags, uint _imageBase)
-            : base(source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
-            _relocCount, _linenumCount, _flags, _imageBase)
-        {
-            Console.Out.WriteLine("[" + _secnum + "] is a data section");
+            int _relocCount, int _linenumCount, uint _flags)
+            : base(decoder, source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
+            _relocCount, _linenumCount, _flags)
+        {            
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ namespace Origami.Win32
 
         public enum OPSIZE { Byte, SignedByte, Word, DWord, QWord, FWord, TByte, MM, XMM, None }
 
-        public uint[] srcBuf;           //the bytes being disassembled
+        public byte[] srcBuf;           //the bytes being disassembled
         public uint srcpos;             //cur pos in source buf
         public uint codeaddr;           //cur addr of instr in mem
         public uint[] instrBytes;       //we store decoded bytes here for printing purposes
@@ -53,7 +53,7 @@ namespace Origami.Win32
         
         private bool useModrm32;
 
-        public i32Disasm(uint[] _source, uint _srcpos)
+        public i32Disasm(byte[] _source, uint _srcpos)
         {
             srcBuf = _source;           //set source buf + pos in buf when we start disassembling
             srcpos = _srcpos;           //source pos can be changed later if we need to skip over some bytes
@@ -159,7 +159,7 @@ namespace Origami.Win32
 
         public uint getNextByte()
         {
-            uint b = srcBuf[srcpos++] % 0x100;
+            uint b = (uint)srcBuf[srcpos++];
             instrBytes[instrLen++] = b;
             codeaddr++;
             return b;

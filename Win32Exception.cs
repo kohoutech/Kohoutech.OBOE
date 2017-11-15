@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or

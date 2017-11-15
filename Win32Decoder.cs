@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -24,26 +24,33 @@ using System.Text;
 
 namespace Origami.Win32
 {
-    class Win32Decoder
+    public class Win32Decoder
     {
         public SourceFile source;
         public Win32Parser parser;
-        String outname;
 
         public PEHeader peHeader;
         public OptionalHeader optionalHeader;
         public List<Section> sections;
-        CodeSection codesection;
+
+        public uint imageBase;
+        public Section exports;
+        public Section imports;
+        public Section resources;
 
         public Win32Decoder(SourceFile _source)
         {
             source = _source;
             parser = new Win32Parser(this);
-            outname = "out.code.txt";
 
             peHeader = null;
             optionalHeader = null;
             sections = null;
+
+            imageBase = 0;
+            exports = null;
+            imports = null;
+            resources = null;
         }
 
         public void setSourceFile(SourceFile _source) 
@@ -53,23 +60,7 @@ namespace Origami.Win32
 
         public void parse()
         {
-            parser.parse();                         //parse win hdr + get section list
-        }
-
-        public void decode()
-        {
-            foreach (Section sec in sections)
-            {
-                if (sec is CodeSection)
-                {
-                    codesection = (CodeSection)sec;
-                    codesection.loadSource();
-                }
-                
-            }
-            codesection.disasmCode();
-            codesection.getAddrList();
-            codesection.writeCodeFile(outname);
+            parser.parse();                         //parse win hdr + get section list + data directories
         }
     }
 }

@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ using System.IO;
 
 namespace Origami.Win32
 {
-    class SourceFile
+    public class SourceFile
     {
         Byte[] srcbuf;
         uint srclen;
@@ -44,9 +44,9 @@ namespace Origami.Win32
             return srcpos;
         }
 
-        public uint[] getRange(uint ofs, uint len)
+        public byte[] getRange(uint ofs, uint len)
         {
-            uint[] result = new uint[len];
+            byte[] result = new byte[len];
             Array.Copy(srcbuf, ofs, result, 0, len);
             return result;
         }
@@ -79,7 +79,7 @@ namespace Origami.Win32
         }
 
         //fixed len string
-        public String getString(int width)
+        public String getAsciiString(int width)
         {
             String result = "";
             for (int i = 0; i < width; i++)

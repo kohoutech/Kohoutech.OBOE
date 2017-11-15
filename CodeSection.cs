@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Windows Library
+Origami Win32 Library
 Copyright (C) 1998-2017  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -22,60 +22,69 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.IO;
 
 namespace Origami.Win32
 {
     
     class CodeSection : Section
     {
-        const int BYTESFIELDWIDTH = 6;
+        const int BYTESFIELDWIDTH = 6;              //in bytes = each byte takes up 3 spaces
+        const int OPCODEFIELDWIDTH = 12;            //in actual spaces
+
         i32Disasm disasm;
         List<String> codeList;
 
-        public CodeSection(SourceFile source, int _secnum, String _sectionName, uint _memsize,
+        public CodeSection(Win32Decoder decoder, SourceFile source, int _secnum, String _sectionName, uint _memsize,
                 uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
-            int _relocCount, int _linenumCount, uint _flags, uint _imageBase)
-            : base(source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
-            _relocCount, _linenumCount, _flags, _imageBase)
-        {
-            Console.Out.WriteLine("[" + _secnum + "] is a code section");
+            int _relocCount, int _linenumCount, uint _flags)
+            : base(decoder, source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
+            _relocCount, _linenumCount, _flags)
+        {            
         }
 
 //-----------------------------------------------------------------------------
 
-        public void disasmCode()
+        //format addr, instruction bytes & asm ops into a list of strings for all bytes in code section
+        //code format based on MS dumpbin utility
+        public List<String> disasmCode()
         {
-            
+            loadSource();
+
             uint srcpos = 0;
             disasm = new i32Disasm(sourceBuf, srcpos);
             codeList = new List<String>();
+            StringBuilder asmLine = new StringBuilder();
 
             uint instrlen = 0;
-            uint codeaddr = imageBase + memloc;         //starting pos of code in mem, used for instr addrs
+            uint codeaddr = memloc;         //starting pos of code in mem, used for instr addrs
 
             while (srcpos < sourceBuf.Length)       
             {
-                disasm.getInstr(codeaddr);
-                instrlen = disasm.instrLen;
+                disasm.getInstr(codeaddr);          //disasm bytes at cur source pos to next instruction
+                instrlen = disasm.instrLen;         //determines how many bytes to format in line
 
-                StringBuilder asmLine = new StringBuilder();
-                asmLine.Append("  " + codeaddr.ToString("X") + ": ");   //address
+                asmLine.Clear();
 
+                //address field
+                asmLine.Append("  " + codeaddr.ToString("X8") + ": ");
+
+                //bytes field
                 for (int i = 0; i < BYTESFIELDWIDTH; i++)
                 {
                     if (i < instrlen)
                     {
-                        asmLine.Append(disasm.instrBytes[i].ToString("X2") + " ");   //bytes
+                        asmLine.Append(disasm.instrBytes[i].ToString("X2") + " ");
                     }
                     else
                     {
-                        asmLine.Append("   ");   //bytes
+                        asmLine.Append("   ");          //extra space in field
                     }
                 }
-
                 asmLine.Append(" ");
-                String spacer = "            ".Substring(0, 12 - disasm.opcode.Length);
+
+                //opcodes - one op followed by 0 to 3 operands
+                String spacer = (disasm.opcode.Length < OPCODEFIELDWIDTH) ?
+                    "            ".Substring(0, OPCODEFIELDWIDTH - disasm.opcode.Length) : "";
                 if (disasm.opcount == 0)
                 {
                     asmLine.Append(disasm.opcode);
@@ -93,17 +102,16 @@ namespace Origami.Win32
                     asmLine.Append(disasm.opcode + spacer + disasm.op1 + "," + disasm.op2 + "," + disasm.op3);
                 }
 
-                asmLine.AppendLine();
-
+                //if all of instructions bytes were too long for one line, put the extra bytes on the next line
                 if (instrlen > 6)
                 {
-                    asmLine.Append("            ");                    
+                    asmLine.AppendLine();
+                    asmLine.Append("            ");
                     for (int i = 6; i < (instrlen - 1); i++)
                     {
                         asmLine.Append(disasm.instrBytes[i].ToString("X2") + " ");   //extra bytes
                     }
-                    asmLine.Append(disasm.instrBytes[instrlen - 1].ToString("X2"));   //last extra bytes
-                    asmLine.AppendLine();
+                    asmLine.Append(disasm.instrBytes[instrlen - 1].ToString("X2"));   //last extra byte
                 }
 
                 codeList.Add(asmLine.ToString());
@@ -111,12 +119,15 @@ namespace Origami.Win32
                 srcpos += instrlen;
                 codeaddr += instrlen;
             }
+
+            freeSource();
+            return codeList;
         }
 
         public void getAddrList()
         {
             Regex regex = new Regex("[0-9A-F]{8}");
-            uint codestart = imageBase + memloc;
+            uint codestart = memloc;
             uint codeend = codestart + memsize;
             
             foreach (String line in codeList)
@@ -131,18 +142,6 @@ namespace Origami.Win32
                     }
                 }
             }
-        }
-
-        public void writeCodeFile(String outname)
-        {
-            StreamWriter outfile = new StreamWriter(outname);
-
-            foreach (String line in codeList)
-            {
-                outfile.Write(line);
-            }
-            outfile.Close();
-        }
-        
+        }        
     }
 }
