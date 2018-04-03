@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2017  George E Greaney
+Copyright (C) 1998-2018  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,6 +23,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using Origami.Asm32;
+
 namespace Origami.Win32
 {
     
@@ -34,11 +36,10 @@ namespace Origami.Win32
         i32Disasm disasm;
         List<String> codeList;
 
-        public CodeSection(Win32Decoder decoder, SourceFile source, int _secnum, String _sectionName, uint _memsize,
-                uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
-            int _relocCount, int _linenumCount, uint _flags)
-            : base(decoder, source, _secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, _pRelocations, _pLinenums,
-            _relocCount, _linenumCount, _flags)
+        public CodeSection(int _secnum, String _sectionName, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
+            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
+            : base(_secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, 
+            _pRelocations, _pLinenums, _relocCount, _linenumCount, _flags)
         {            
         }
 
@@ -48,20 +49,21 @@ namespace Origami.Win32
         //code format based on MS dumpbin utility
         public List<String> disasmCode()
         {
-            loadSource();
-
             uint srcpos = 0;
-            disasm = new i32Disasm(sourceBuf, srcpos);
             codeList = new List<String>();
             StringBuilder asmLine = new StringBuilder();
-
+            disasm = new i32Disasm(data, srcpos);
+            Instruction instr;
             uint instrlen = 0;
+            List<int> instrBytes;
+
             uint codeaddr = memloc;         //starting pos of code in mem, used for instr addrs
 
-            while (srcpos < sourceBuf.Length)       
+            while (srcpos < (data.Length - disasm.MAXINSTRLEN))
             {
-                disasm.getInstr(codeaddr);          //disasm bytes at cur source pos to next instruction
-                instrlen = disasm.instrLen;         //determines how many bytes to format in line
+                instr = disasm.getInstr(codeaddr);          //disasm bytes at cur source pos into next instruction
+                instrBytes = instr.getBytes();              //the instruction's bytes
+                instrlen = (uint)instrBytes.Count;          //determines how many bytes to format in line
 
                 asmLine.Clear();
 
@@ -73,45 +75,53 @@ namespace Origami.Win32
                 {
                     if (i < instrlen)
                     {
-                        asmLine.Append(disasm.instrBytes[i].ToString("X2") + " ");
+                        asmLine.Append(instrBytes[i].ToString("X2") + " ");
                     }
                     else
                     {
                         asmLine.Append("   ");          //extra space in field
                     }
                 }
-                asmLine.Append(" ");
+                asmLine.Append(" ");                    //space over to opcode field
 
-                //opcodes - one op followed by 0 to 3 operands
-                String spacer = (disasm.opcode.Length < OPCODEFIELDWIDTH) ?
-                    "            ".Substring(0, OPCODEFIELDWIDTH - disasm.opcode.Length) : "";
-                if (disasm.opcount == 0)
+                //opcode field
+                String opcode = instr.ToString();
+                if (instr.lockprefix)
                 {
-                    asmLine.Append(disasm.opcode);
+                    opcode = "LOCK " + opcode;
                 }
-                else if (disasm.opcount == 1)
+                asmLine.Append(opcode);
+
+                //operands field
+                String spacer = (opcode.Length < OPCODEFIELDWIDTH) ? 
+                    "            ".Substring(0, OPCODEFIELDWIDTH - opcode.Length) : "";
+
+                if (instr.opcount > 0)
                 {
-                    asmLine.Append(disasm.opcode + spacer + disasm.op1);
+                    asmLine.Append(spacer + instr.op1.ToString());
                 }
-                else if (disasm.opcount == 2)
+                if (instr.opcount > 1)
                 {
-                    asmLine.Append(disasm.opcode + spacer + disasm.op1 + "," + disasm.op2);
+                    asmLine.Append("," + instr.op2.ToString());
                 }
-                else if (disasm.opcount == 3)
+                if (instr.opcount > 2)
                 {
-                    asmLine.Append(disasm.opcode + spacer + disasm.op1 + "," + disasm.op2 + "," + disasm.op3);
+                    asmLine.Append("," + instr.op3.ToString());
                 }
 
                 //if all of instructions bytes were too long for one line, put the extra bytes on the next line
                 if (instrlen > 6)
                 {
                     asmLine.AppendLine();
-                    asmLine.Append("            ");
-                    for (int i = 6; i < (instrlen - 1); i++)
+                    asmLine.Append("            ");                 //blank addr field
+                    for (int i = 6; i < instrlen; i++)
                     {
-                        asmLine.Append(disasm.instrBytes[i].ToString("X2") + " ");   //extra bytes
-                    }
-                    asmLine.Append(disasm.instrBytes[instrlen - 1].ToString("X2"));   //last extra byte
+                        asmLine.Append(instrBytes[i].ToString("X2"));    //extra bytes
+                        if (i < (instrlen - 1))
+                        {
+                            asmLine.Append(" ");
+                        }
+                    }                    
                 }
 
                 codeList.Add(asmLine.ToString());
@@ -120,7 +130,6 @@ namespace Origami.Win32
                 codeaddr += instrlen;
             }
 
-            freeSource();
             return codeList;
         }
 

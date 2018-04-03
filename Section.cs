@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2017  George E Greaney
+Copyright (C) 1998-2018  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -29,50 +29,47 @@ namespace Origami.Win32
     public class Section
     {
         //section flag constants
-        const uint IMAGE_SCN_TYPE_NO_PAD = 0x00000008;
+        public const uint IMAGE_SCN_TYPE_NO_PAD = 0x00000008;
 
-        const uint IMAGE_SCN_CNT_CODE               = 0x00000020;
-        const uint IMAGE_SCN_CNT_INITIALIZED_DATA   = 0x00000040;
-        const uint IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
-        const uint IMAGE_SCN_LNK_OTHER              = 0x00000100;
-        const uint IMAGE_SCN_LNK_INFO               = 0x00000200;
-        const uint IMAGE_SCN_LNK_REMOVE             = 0x00000800;
-        const uint IMAGE_SCN_LNK_COMDAT             = 0x00001000;
-        const uint IMAGE_SCN_NO_DEFER_SPEC_EXC      = 0x00004000;
-        const uint IMAGE_SCN_GPREL                  = 0x00008000;
+        public const uint IMAGE_SCN_CNT_CODE = 0x00000020;
+        public const uint IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040;
+        public const uint IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
+        public const uint IMAGE_SCN_LNK_OTHER = 0x00000100;
+        public const uint IMAGE_SCN_LNK_INFO = 0x00000200;
+        public const uint IMAGE_SCN_LNK_REMOVE = 0x00000800;
+        public const uint IMAGE_SCN_LNK_COMDAT = 0x00001000;
+        public const uint IMAGE_SCN_NO_DEFER_SPEC_EXC = 0x00004000;
+        public const uint IMAGE_SCN_GPREL = 0x00008000;
 
-        const uint IMAGE_SCN_MEM_PURGEABLE = 0x00020000;
-        const uint IMAGE_SCN_MEM_LOCKED    = 0x00040000;
-        const uint IMAGE_SCN_MEM_PRELOAD   = 0x00080000;
+        public const uint IMAGE_SCN_MEM_PURGEABLE = 0x00020000;
+        public const uint IMAGE_SCN_MEM_LOCKED = 0x00040000;
+        public const uint IMAGE_SCN_MEM_PRELOAD = 0x00080000;
 
         //valid only for object files
-        const uint IMAGE_SCN_ALIGN_1BYTES = 0x00100000;
-        const uint IMAGE_SCN_ALIGN_2BYTES = 0x00200000;
-        const uint IMAGE_SCN_ALIGN_4BYTES = 0x00300000;
-        const uint IMAGE_SCN_ALIGN_8BYTES = 0x00400000;
-        const uint IMAGE_SCN_ALIGN_16BYTES = 0x00500000;
-        const uint IMAGE_SCN_ALIGN_32BYTES = 0x00600000;
-        const uint IMAGE_SCN_ALIGN_64BYTES = 0x00700000;
-        const uint IMAGE_SCN_ALIGN_128BYTES = 0x00800000;
-        const uint IMAGE_SCN_ALIGN_256BYTES = 0x00900000;
-        const uint IMAGE_SCN_ALIGN_512BYTES = 0x00A00000;
-        const uint IMAGE_SCN_ALIGN_1024BYTES = 0x00B00000;
-        const uint IMAGE_SCN_ALIGN_2048BYTES = 0x00C00000;
-        const uint IMAGE_SCN_ALIGN_4096BYTES = 0x00D00000;
-        const uint IMAGE_SCN_ALIGN_8192BYTES = 0x00E00000;
+        public const uint IMAGE_SCN_ALIGN_1BYTES = 0x00100000;
+        public const uint IMAGE_SCN_ALIGN_2BYTES = 0x00200000;
+        public const uint IMAGE_SCN_ALIGN_4BYTES = 0x00300000;
+        public const uint IMAGE_SCN_ALIGN_8BYTES = 0x00400000;
+        public const uint IMAGE_SCN_ALIGN_16BYTES = 0x00500000;
+        public const uint IMAGE_SCN_ALIGN_32BYTES = 0x00600000;
+        public const uint IMAGE_SCN_ALIGN_64BYTES = 0x00700000;
+        public const uint IMAGE_SCN_ALIGN_128BYTES = 0x00800000;
+        public const uint IMAGE_SCN_ALIGN_256BYTES = 0x00900000;
+        public const uint IMAGE_SCN_ALIGN_512BYTES = 0x00A00000;
+        public const uint IMAGE_SCN_ALIGN_1024BYTES = 0x00B00000;
+        public const uint IMAGE_SCN_ALIGN_2048BYTES = 0x00C00000;
+        public const uint IMAGE_SCN_ALIGN_4096BYTES = 0x00D00000;
+        public const uint IMAGE_SCN_ALIGN_8192BYTES = 0x00E00000;
 
-        const uint IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
-        const uint IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
-        const uint IMAGE_SCN_MEM_NOT_CACHED  = 0x04000000;
-        const uint IMAGE_SCN_MEM_NOT_PAGED   = 0x08000000;
+        public const uint IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
+        public const uint IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
+        public const uint IMAGE_SCN_MEM_NOT_CACHED = 0x04000000;
+        public const uint IMAGE_SCN_MEM_NOT_PAGED = 0x08000000;
 
-        const uint IMAGE_SCN_MEM_SHARED      = 0x10000000;
-        const uint IMAGE_SCN_MEM_EXECUTE     = 0x20000000;
-        const uint IMAGE_SCN_MEM_READ        = 0x40000000;
-        const uint IMAGE_SCN_MEM_WRITE       = 0x80000000;
-
-        public Win32Decoder decoder;
-        protected SourceFile source;
+        public const uint IMAGE_SCN_MEM_SHARED = 0x10000000;
+        public const uint IMAGE_SCN_MEM_EXECUTE = 0x20000000;
+        public const uint IMAGE_SCN_MEM_READ = 0x40000000;
+        public const uint IMAGE_SCN_MEM_WRITE = 0x80000000;
 
         public int secNum;
         public String secName;
@@ -90,54 +87,17 @@ namespace Origami.Win32
         public uint flags;
 
         public uint imageBase;
-        public byte[] sourceBuf;
-
-//using a factory method because we don't know what type of section it is until we read the section header
-        public static Section getSection(Win32Decoder decoder, SourceFile source, int _secnum)
-        {
-            String sectionName = source.getAsciiString(8);   
-         
-            uint memsize = source.getFour();
-            uint memloc = source.getFour();
-            uint filesize = source.getFour();
-            uint fileloc = source.getFour();
-
-            uint prelocations = source.getFour();
-            uint plinenums = source.getFour();
-            int reloccount = (int) source.getTwo();
-            int linenumcount = (int) source.getTwo();
-            uint flags = source.getFour();
-
-            Section result;
-            if ((flags & IMAGE_SCN_CNT_CODE) != 0)
-            {
-                result = new CodeSection(decoder, source, _secnum, sectionName, memsize, memloc,
-                    filesize, fileloc, prelocations, plinenums, reloccount, linenumcount, flags);
-            }
-            else
-            {
-                result = new DataSection(decoder, source, _secnum, sectionName, memsize, memloc,
-                    filesize, fileloc, prelocations, plinenums, reloccount, linenumcount, flags);
-            }
-
-            return result;
-        }
-
-//-----------------------------------------------------------------------------
+        public byte[] data;
 
         //cons
-        public Section(Win32Decoder _decoder, SourceFile _source, int _secnum, String _sectionName, uint _memsize, 
-                uint _memloc, uint _filesize, uint _fileloc, uint _pRelocations, uint _pLinenums,
-            int _relocCount, int _linenumCount, uint _flags)
+        public Section(int _secnum, String _sectionName, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
+            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
         {
-            decoder = _decoder;
-            source = _source;
             secNum = _secnum;
             secName = _sectionName;
 
-            imageBase = decoder.imageBase;
             memsize = _memsize;
-            memloc = imageBase + _memloc;
+            memloc = _memloc;
             filesize = _filesize;
             fileloc = _fileloc;
 
@@ -148,7 +108,8 @@ namespace Origami.Win32
 
             flags = _flags;
 
-            sourceBuf = null;
+            imageBase = 0;
+            data = null;
         }
 
 //- flag methods --------------------------------------------------------------
@@ -188,59 +149,46 @@ namespace Origami.Win32
             return (flags & IMAGE_SCN_MEM_WRITE) != 0;
         }
         
-//-----------------------------------------------------------------------------
+//- displaying ---------------------------------------------------------------
 
-        public void loadSource() 
+        public String displayData()
         {
-            sourceBuf = source.getRange(fileloc, memsize);          //memsize should be <= filesize
-        }
+            StringBuilder dataStr = new StringBuilder();       //the whole thing as one LONG string
+            StringBuilder ascii = new StringBuilder();      //the ascii representation of the bytes on one line
 
-        public void freeSource()
-        {
-            sourceBuf = null;
-        }
-
-
-
-        public String getSectionData()
-        {
-            loadSource();
-
-            StringBuilder info = new StringBuilder();
-            StringBuilder ascii = new StringBuilder();
-            int i = 0;
+            int bpos = 0;
             uint loc = memloc;
-            for (; i < sourceBuf.Length; )
+            for (; bpos < data.Length; )
             {
-                if (i % 16 == 0)
+                if (bpos % 16 == 0)
                 {
-                    info.Append(loc.ToString("X8") + ": ");
+                    dataStr.Append(loc.ToString("X8") + ": ");         //address field if at start of line
                 }
-                uint b = sourceBuf[i];
-                info.Append(b.ToString("X2"));
-                info.Append(" ");
-                ascii.Append((b >= 0x20 && b <= 0x7E) ? ((char)b).ToString() : ".");
-                i++;
+
+                uint b = data[bpos];
+                dataStr.Append(b.ToString("X2"));                                              //single byte value in hex
+                dataStr.Append(" ");
+                ascii.Append((b >= 0x20 && b <= 0x7E) ? ((char)b).ToString() : ".");        //and its ascii equivalent
+                bpos++;
                 loc++;
-                if (i % 16 == 0)
+
+                if (bpos % 16 == 0)
                 {
-                    info.AppendLine(ascii.ToString());
+                    dataStr.AppendLine(ascii.ToString());      //ascii field if at end of line
                     ascii.Clear();
                 }
             }
-            if (i % 16 != 0)
+            if (bpos % 16 != 0)             //fill out partial last line
             {
-                int remainder = (i % 16);
+                int remainder = (bpos % 16);
                 for (; remainder < 16; remainder++)
                 {
-                    info.Append("   ");
+                    dataStr.Append("   ");                  //space over to line up ascii field
                     
                 }
-                info.AppendLine(ascii.ToString());
+                dataStr.AppendLine(ascii.ToString());
             }
-            freeSource();
-            return info.ToString();
+            return dataStr.ToString();
         }
-
     }
 }

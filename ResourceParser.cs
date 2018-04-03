@@ -291,7 +291,7 @@ namespace Origami.Win32
 
     public class StringTableEntry : ResourceData
     {
-        int bundleNum;
+        public int bundleNum;
         public List<String> strings;
 
         public int getString(int strpos)

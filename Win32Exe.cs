@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2017  George E Greaney
+Copyright (C) 1998-2018  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -22,14 +22,40 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+//win32 exe model
+
 namespace Origami.Win32
 {
-    class Win32Exception : Exception
+    public class Win32Exe
     {
-        public Win32Exception(string message)
-            : base(message)
+        public String filename;
+
+        public MsDosHeader dosHeader;
+        public PEHeader peHeader;
+        public OptionalHeader optHeader;
+        public List<Section> sections;
+
+        public uint imageBase;
+        public Section exports;
+        public Section imports;
+        public Section resources;
+
+        public Win32Exe()
         {
+            filename = null;
+            peHeader = null;
+            optHeader = null;
+            sections = new List<Section>();
+
+            imageBase = 0;
+            exports = null;
+            imports = null;
+            resources = null;
         }
 
+        public void setSourceFile(String fname) 
+        {
+            filename = fname;
+        }
     }
 }
