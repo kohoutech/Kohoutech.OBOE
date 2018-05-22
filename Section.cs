@@ -71,6 +71,7 @@ namespace Origami.Win32
         public const uint IMAGE_SCN_MEM_READ = 0x40000000;
         public const uint IMAGE_SCN_MEM_WRITE = 0x80000000;
 
+//section header fields
         public int secNum;
         public String secName;
 
@@ -90,26 +91,45 @@ namespace Origami.Win32
         public byte[] data;
 
         //cons
-        public Section(int _secnum, String _sectionName, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
-            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
+        public Section()
         {
-            secNum = _secnum;
-            secName = _sectionName;
+            secNum = 0;
+            secName = "";
 
-            memsize = _memsize;
-            memloc = _memloc;
-            filesize = _filesize;
-            fileloc = _fileloc;
+            memsize = 0;
+            memloc = 0;
+            filesize = 0;
+            fileloc = 0;
 
-            pRelocations = _pRelocations;
-            pLinenums = _pLinenums;
-            relocCount = _relocCount;
-            linenumCount = _linenumCount;
+            pRelocations = 0;
+            pLinenums = 0;
+            relocCount = 0;
+            linenumCount = 0;
 
-            flags = _flags;
-
+            flags = 0;
             imageBase = 0;
             data = null;
+        }
+
+        public Section(int _secnum, String _secname, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
+            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
+        {
+            this.secNum = _secnum;
+            this.secName = _secname;
+
+            this.memsize = _memsize;
+            this.memloc = _memloc;
+            this.filesize = _filesize;
+            this.fileloc = _fileloc;
+
+            this.pRelocations = _pRelocations;
+            this.pLinenums = _pLinenums;
+            this.relocCount = _relocCount;
+            this.linenumCount = _linenumCount;
+
+            this.flags = _flags;
+            this.imageBase = 0;
+            this.data = null;
         }
 
 //- flag methods --------------------------------------------------------------

@@ -23,25 +23,30 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using Origami.Asm32;
+//using Origami.Asm32;
 
 namespace Origami.Win32
 {
     
     class CodeSection : Section
-    {
+    { 
         const int BYTESFIELDWIDTH = 6;              //in bytes = each byte takes up 3 spaces
         const int OPCODEFIELDWIDTH = 12;            //in actual spaces
 
-        i32Disasm disasm;
         List<String> codeList;
 
-        public CodeSection(int _secnum, String _sectionName, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
-            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
-            : base(_secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, 
-            _pRelocations, _pLinenums, _relocCount, _linenumCount, _flags)
-        {            
+        public CodeSection()
+            : base()
+        {
+            codeList = null;
         }
+
+        //public CodeSection(int _secnum, String _sectionName, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
+        //    uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
+        //    : base(_secnum, _sectionName, _memsize, _memloc, _filesize, _fileloc, 
+        //    _pRelocations, _pLinenums, _relocCount, _linenumCount, _flags)
+        //{            
+        //}
 
 //-----------------------------------------------------------------------------
 
@@ -51,84 +56,84 @@ namespace Origami.Win32
         {
             uint srcpos = 0;
             codeList = new List<String>();
-            StringBuilder asmLine = new StringBuilder();
-            disasm = new i32Disasm(data, srcpos);
-            Instruction instr;
-            uint instrlen = 0;
-            List<int> instrBytes;
+            //StringBuilder asmLine = new StringBuilder();
+            //i32Disasm disasm = new i32Disasm(data, srcpos);
+            //Instruction instr;
+            //uint instrlen = 0;
+            //List<int> instrBytes;
 
-            uint codeaddr = memloc;         //starting pos of code in mem, used for instr addrs
+            //uint codeaddr = memloc;         //starting pos of code in mem, used for instr addrs
 
-            while (srcpos < (data.Length - disasm.MAXINSTRLEN))
-            {
-                instr = disasm.getInstr(codeaddr);          //disasm bytes at cur source pos into next instruction
-                instrBytes = instr.getBytes();              //the instruction's bytes
-                instrlen = (uint)instrBytes.Count;          //determines how many bytes to format in line
+            //while (srcpos < (data.Length - disasm.MAXINSTRLEN))
+            //{
+            //    instr = disasm.getInstr(codeaddr);          //disasm bytes at cur source pos into next instruction
+            //    instrBytes = instr.getBytes();              //the instruction's bytes
+            //    instrlen = (uint)instrBytes.Count;          //determines how many bytes to format in line
 
-                asmLine.Clear();
+            //    asmLine.Clear();
 
-                //address field
-                asmLine.Append("  " + codeaddr.ToString("X8") + ": ");
+            //    //address field
+            //    asmLine.Append("  " + codeaddr.ToString("X8") + ": ");
 
-                //bytes field
-                for (int i = 0; i < BYTESFIELDWIDTH; i++)
-                {
-                    if (i < instrlen)
-                    {
-                        asmLine.Append(instrBytes[i].ToString("X2") + " ");
-                    }
-                    else
-                    {
-                        asmLine.Append("   ");          //extra space in field
-                    }
-                }
-                asmLine.Append(" ");                    //space over to opcode field
+            //    //bytes field
+            //    for (int i = 0; i < BYTESFIELDWIDTH; i++)
+            //    {
+            //        if (i < instrlen)
+            //        {
+            //            asmLine.Append(instrBytes[i].ToString("X2") + " ");
+            //        }
+            //        else
+            //        {
+            //            asmLine.Append("   ");          //extra space in field
+            //        }
+            //    }
+            //    asmLine.Append(" ");                    //space over to opcode field
 
-                //opcode field
-                String opcode = instr.ToString();
-                if (instr.lockprefix)
-                {
-                    opcode = "LOCK " + opcode;
-                }
-                asmLine.Append(opcode);
+            //    //opcode field
+            //    String opcode = instr.ToString();
+            //    if (instr.lockprefix)
+            //    {
+            //        opcode = "LOCK " + opcode;
+            //    }
+            //    asmLine.Append(opcode);
 
-                //operands field
-                String spacer = (opcode.Length < OPCODEFIELDWIDTH) ? 
-                    "            ".Substring(0, OPCODEFIELDWIDTH - opcode.Length) : "";
+            //    //operands field
+            //    String spacer = (opcode.Length < OPCODEFIELDWIDTH) ? 
+            //        "            ".Substring(0, OPCODEFIELDWIDTH - opcode.Length) : "";
 
-                if (instr.opcount > 0)
-                {
-                    asmLine.Append(spacer + instr.op1.ToString());
-                }
-                if (instr.opcount > 1)
-                {
-                    asmLine.Append("," + instr.op2.ToString());
-                }
-                if (instr.opcount > 2)
-                {
-                    asmLine.Append("," + instr.op3.ToString());
-                }
+            //    if (instr.opcount > 0)
+            //    {
+            //        asmLine.Append(spacer + instr.op1.ToString());
+            //    }
+            //    if (instr.opcount > 1)
+            //    {
+            //        asmLine.Append("," + instr.op2.ToString());
+            //    }
+            //    if (instr.opcount > 2)
+            //    {
+            //        asmLine.Append("," + instr.op3.ToString());
+            //    }
 
-                //if all of instructions bytes were too long for one line, put the extra bytes on the next line
-                if (instrlen > 6)
-                {
-                    asmLine.AppendLine();
-                    asmLine.Append("            ");                 //blank addr field
-                    for (int i = 6; i < instrlen; i++)
-                    {
-                        asmLine.Append(instrBytes[i].ToString("X2"));    //extra bytes
-                        if (i < (instrlen - 1))
-                        {
-                            asmLine.Append(" ");
-                        }
-                    }                    
-                }
+            //    //if all of instructions bytes were too long for one line, put the extra bytes on the next line
+            //    if (instrlen > 6)
+            //    {
+            //        asmLine.AppendLine();
+            //        asmLine.Append("            ");                 //blank addr field
+            //        for (int i = 6; i < instrlen; i++)
+            //        {
+            //            asmLine.Append(instrBytes[i].ToString("X2"));    //extra bytes
+            //            if (i < (instrlen - 1))
+            //            {
+            //                asmLine.Append(" ");
+            //            }
+            //        }                    
+            //    }
 
-                codeList.Add(asmLine.ToString());
+            //    codeList.Add(asmLine.ToString());
 
-                srcpos += instrlen;
-                codeaddr += instrlen;
-            }
+            //    srcpos += instrlen;
+            //    codeaddr += instrlen;
+            //}
 
             return codeList;
         }

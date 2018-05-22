@@ -25,12 +25,6 @@ using System.Text;
 namespace Origami.Win32
 {
 
-//- ms dos header -------------------------------------------------------------
-
-    public class MsDosHeader
-    {
-    }
-
 //- pe header -----------------------------------------------------------------
 
     public class PEHeader
