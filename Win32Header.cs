@@ -29,7 +29,7 @@ namespace Origami.Win32
 
     public class PEHeader
     {
-        public uint pesig;
+        //public uint pesig;
         public uint machine;
         public int sectionCount;
         public uint timeStamp;
@@ -143,4 +143,17 @@ namespace Origami.Win32
             size = _size;
         }
     }
+
+//- obj sym table ------------------------------------------------------------
+
+    public class ObjSymbolRecord
+    {
+        String name;
+        uint value;
+        uint sectionNum;
+        uint type;
+        uint storageClass;
+        uint auxSymbolCount;
+    }
+
 }

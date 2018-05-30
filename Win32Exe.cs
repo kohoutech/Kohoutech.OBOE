@@ -56,9 +56,55 @@ namespace Origami.Win32
 
 //- ms dos header -------------------------------------------------------------
 
+        //the dos header is only used in reading in / writing out win32 exe files
         public class MsDosHeader
         {
+            public uint signature;
+            public uint lastsize;
+            public uint nblocks;
+            public uint nreloc;
+            public uint hdrsize;
+            public uint minalloc;
+            public uint maxalloc;
+            public uint ss;
+            public uint sp;
+            public uint checksum;
+            public uint ip;
+            public uint cs;
+            public uint relocpos;
+            public uint noverlay;
+            public byte[] reserved1;
+            public uint oem_id;
+            public uint oem_info;
+            public byte[] reserved2;
+            public uint e_lfanew;         // Offset to the 'PE\0\0' signature relative to the beginning of the file
         }
+
+        private void readMSDOSHeader(SourceFile source)
+        {
+            dosHeader = new MsDosHeader();
+
+            dosHeader.signature = source.getTwo();
+            dosHeader.lastsize = source.getTwo();
+            dosHeader.nblocks = source.getTwo();
+            dosHeader.nreloc = source.getTwo();
+            dosHeader.hdrsize = source.getTwo();
+            dosHeader.minalloc = source.getTwo();
+            dosHeader.maxalloc = source.getTwo();
+            dosHeader.ss = source.getTwo();
+            dosHeader.sp = source.getTwo();
+            dosHeader.checksum = source.getTwo();
+            dosHeader.ip = source.getTwo();
+            dosHeader.cs = source.getTwo();
+            dosHeader.relocpos = source.getTwo();
+            dosHeader.noverlay = source.getTwo();
+            dosHeader.reserved1 = source.getRange(8);
+            dosHeader.oem_id = source.getTwo();
+            dosHeader.oem_info = source.getTwo();
+            dosHeader.reserved2 = source.getRange(20);
+            dosHeader.e_lfanew = source.getFour();
+        }
+
 
 //- reading in ----------------------------------------------------------------
 
@@ -74,19 +120,17 @@ namespace Origami.Win32
             getResourceTable(source);
         }
 
-        private void readMSDOSHeader(SourceFile source)
-        {
-            uint e_magic = source.getFour();
-            source.seek(0x3c);
-            uint e_lfanew = source.getFour();
-            source.seek(e_lfanew);
-        }
-
         private void readWinHeader(SourceFile source)
         {
             peHeader = new PEHeader();
 
-            peHeader.pesig = source.getFour();
+            source.seek(dosHeader.e_lfanew);
+            uint pesig = source.getFour();
+            if (pesig != 0x00004550)
+            {
+                throw new Win32Exception("this is not a valid win32 executable file");
+            }
+
             peHeader.machine = source.getTwo();
             peHeader.sectionCount = (int)source.getTwo();
             peHeader.timeStamp = source.getFour();

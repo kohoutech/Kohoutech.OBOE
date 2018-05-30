@@ -52,6 +52,14 @@ namespace Origami.Win32
             return srcpos;
         }
 
+        public byte[] getRange(uint len)
+        {
+            byte[] result = new byte[len];
+            Array.Copy(srcbuf, srcpos, result, 0, len);
+            srcpos += len;
+            return result;
+        }
+
         public byte[] getRange(uint ofs, uint len)
         {
             byte[] result = new byte[len];
