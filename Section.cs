@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2018  George E Greaney
+Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,187 +28,211 @@ namespace Origami.Win32
 {
     public class Section
     {
-        //section flag constants
-        public const uint IMAGE_SCN_TYPE_NO_PAD = 0x00000008;
-
-        public const uint IMAGE_SCN_CNT_CODE = 0x00000020;
-        public const uint IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040;
-        public const uint IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080;
-        public const uint IMAGE_SCN_LNK_OTHER = 0x00000100;
-        public const uint IMAGE_SCN_LNK_INFO = 0x00000200;
-        public const uint IMAGE_SCN_LNK_REMOVE = 0x00000800;
-        public const uint IMAGE_SCN_LNK_COMDAT = 0x00001000;
-        public const uint IMAGE_SCN_NO_DEFER_SPEC_EXC = 0x00004000;
-        public const uint IMAGE_SCN_GPREL = 0x00008000;
-
-        public const uint IMAGE_SCN_MEM_PURGEABLE = 0x00020000;
-        public const uint IMAGE_SCN_MEM_LOCKED = 0x00040000;
-        public const uint IMAGE_SCN_MEM_PRELOAD = 0x00080000;
-
-        //valid only for object files
-        public const uint IMAGE_SCN_ALIGN_1BYTES = 0x00100000;
-        public const uint IMAGE_SCN_ALIGN_2BYTES = 0x00200000;
-        public const uint IMAGE_SCN_ALIGN_4BYTES = 0x00300000;
-        public const uint IMAGE_SCN_ALIGN_8BYTES = 0x00400000;
-        public const uint IMAGE_SCN_ALIGN_16BYTES = 0x00500000;
-        public const uint IMAGE_SCN_ALIGN_32BYTES = 0x00600000;
-        public const uint IMAGE_SCN_ALIGN_64BYTES = 0x00700000;
-        public const uint IMAGE_SCN_ALIGN_128BYTES = 0x00800000;
-        public const uint IMAGE_SCN_ALIGN_256BYTES = 0x00900000;
-        public const uint IMAGE_SCN_ALIGN_512BYTES = 0x00A00000;
-        public const uint IMAGE_SCN_ALIGN_1024BYTES = 0x00B00000;
-        public const uint IMAGE_SCN_ALIGN_2048BYTES = 0x00C00000;
-        public const uint IMAGE_SCN_ALIGN_4096BYTES = 0x00D00000;
-        public const uint IMAGE_SCN_ALIGN_8192BYTES = 0x00E00000;
-
-        public const uint IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000;
-        public const uint IMAGE_SCN_MEM_DISCARDABLE = 0x02000000;
-        public const uint IMAGE_SCN_MEM_NOT_CACHED = 0x04000000;
-        public const uint IMAGE_SCN_MEM_NOT_PAGED = 0x08000000;
-
-        public const uint IMAGE_SCN_MEM_SHARED = 0x10000000;
-        public const uint IMAGE_SCN_MEM_EXECUTE = 0x20000000;
-        public const uint IMAGE_SCN_MEM_READ = 0x40000000;
-        public const uint IMAGE_SCN_MEM_WRITE = 0x80000000;
-
-//section header fields
+        //section header fields
         public int secNum;
-        public String secName;
+        public String name;
 
-        public uint memloc;                 //section addr in memory
-        public uint memsize;                //section size in memory
-        public uint fileloc;                //section addr in file
-        public uint filesize;               //section size in file
+        public uint memPos;                 //section addr in memory
+        public uint memSize;                //section size in memory
+        public uint filePos;                //section addr in file
+        public uint fileSize;               //section size in file
 
-        public uint pRelocations;
-        public uint pLinenums;
-        public int relocCount;
-        public int linenumCount;
+        public Characteristics flags;
+        public Alignment dataAlignment;
 
-        public uint flags;
+        //flag fields
+        [Flags]
+        public enum Characteristics : uint
+        {
+            IMAGE_SCN_CNT_CODE = 0x00000020,  	            //The section contains executable code.
+            IMAGE_SCN_CNT_INITIALIZED_DATA = 0x00000040, 	//The section contains initialized data.
+            IMAGE_SCN_CNT_UNINITIALIZED_DATA = 0x00000080,  //The section contains uninitialized data.
+            IMAGE_SCN_LNK_INFO = 0x00000200,  	            //The section contains comments or other information. The .drectve section has this type. This is valid for object files only.
+            IMAGE_SCN_LNK_REMOVE = 0x00000800,  	        //The section will not become part of the image. This is valid only for object files.
+            IMAGE_SCN_LNK_COMDAT = 0x00001000,  	        //The section contains COMDAT data. For more information, see COMDAT Sections (Object Only). This is valid only for object files.
+            IMAGE_SCN_GPREL = 0x00008000,  	                //The section contains data referenced through the global pointer (GP).
 
-        public uint imageBase;
+            IMAGE_SCN_LNK_NRELOC_OVFL = 0x01000000,         //The section contains extended relocations.
+            IMAGE_SCN_MEM_DISCARDABLE = 0x02000000,         //The section can be discarded as needed.
+            IMAGE_SCN_MEM_NOT_CACHED = 0x04000000,          //The section cannot be cached.
+            IMAGE_SCN_MEM_NOT_PAGED = 0x08000000,           //The section is not pageable.
+            IMAGE_SCN_MEM_SHARED = 0x10000000,              //The section can be shared in memory.
+            IMAGE_SCN_MEM_EXECUTE = 0x20000000,             //The section can be executed as code.
+            IMAGE_SCN_MEM_READ = 0x40000000,                //The section can be read.
+            IMAGE_SCN_MEM_WRITE = 0x80000000                //The section can be written to. 
+        }
+
+        //Align data on a nnn-byte boundary. Valid only for object files.
+        public enum Alignment
+        {
+            IMAGE_SCN_ALIGN_1BYTES,
+            IMAGE_SCN_ALIGN_2BYTES,
+            IMAGE_SCN_ALIGN_4BYTES,
+            IMAGE_SCN_ALIGN_8BYTES,
+            IMAGE_SCN_ALIGN_16BYTES,
+            IMAGE_SCN_ALIGN_32BYTES,
+            IMAGE_SCN_ALIGN_64BYTES,
+            IMAGE_SCN_ALIGN_128BYTES,
+            IMAGE_SCN_ALIGN_256BYTES,
+            IMAGE_SCN_ALIGN_512BYTES,
+            IMAGE_SCN_ALIGN_1024BYTES,
+            IMAGE_SCN_ALIGN_2048BYTES,
+            IMAGE_SCN_ALIGN_4096BYTES,
+            IMAGE_SCN_ALIGN_8192BYTES
+        }
+
+        public List<CoffRelocation> relocations;
+        public uint relocTblPos;
+
+        public List<CoffLineNumber> linenumbers;                //line num data is deprecated
+
         public byte[] data;
+        public uint len;
 
-        //cons
-        public Section()
+        //new section cons
+        public Section(String _name)
         {
             secNum = 0;
-            secName = "";
+            name = _name;
 
-            memsize = 0;
-            memloc = 0;
-            filesize = 0;
-            fileloc = 0;
-
-            pRelocations = 0;
-            pLinenums = 0;
-            relocCount = 0;
-            linenumCount = 0;
+            memSize = 0;
+            memPos = 0;
+            fileSize = 0;
+            filePos = 0;
 
             flags = 0;
-            imageBase = 0;
-            data = null;
+            dataAlignment = Alignment.IMAGE_SCN_ALIGN_1BYTES;
+
+            relocations = new List<CoffRelocation>();
+            linenumbers = new List<CoffLineNumber>();
+
+            data = new byte[0];
+            len = 0;
         }
 
-        public Section(int _secnum, String _secname, uint _memsize, uint _memloc, uint _filesize, uint _fileloc, 
-            uint _pRelocations, uint _pLinenums, int _relocCount, int _linenumCount, uint _flags)
+        //- reading in ----------------------------------------------------------------
+
+        //read in both section tbl entry & section data
+        public static Section readSection(SourceFile source)
         {
-            this.secNum = _secnum;
-            this.secName = _secname;
+            //if section name is stored in string tbl, we read in index & let caller deref the actual name
+            String name = source.getAsciiString(8);
+            Section section = new Section(name);
 
-            this.memsize = _memsize;
-            this.memloc = _memloc;
-            this.filesize = _filesize;
-            this.fileloc = _fileloc;
+            section.memSize = source.getFour();
+            section.memPos = source.getFour();
+            section.fileSize = source.getFour();
+            section.filePos = source.getFour();
 
-            this.pRelocations = _pRelocations;
-            this.pLinenums = _pLinenums;
-            this.relocCount = _relocCount;
-            this.linenumCount = _linenumCount;
+            uint relocPos = source.getFour();
+            uint lineNumPos = source.getFour();
+            uint relocCount = source.getFour();
+            uint lineNumCount = source.getFour();
+            section.relocations = CoffRelocation.read(source, relocPos, relocCount);
+            section.linenumbers = CoffLineNumber.read(source, lineNumPos, lineNumCount);
 
-            this.flags = _flags;
-            this.imageBase = 0;
-            this.data = null;
+            //load flags & extract alignment value
+            uint flagval = source.getFour();
+            section.dataAlignment = (Alignment)((flagval >> 20) % 0x10);
+            flagval &= ~((uint)0x00f00000);
+            section.flags = (Characteristics)flagval;
+
+            //load section data - read in all the bytes that will be loaded into mem (memsize)
+            //and skip the remaining section bytes (filesize) to pad out the data to a file boundary
+            section.data = source.getRange(section.filePos, section.memSize);
+
+            return section;
         }
 
-//- flag methods --------------------------------------------------------------
+        //- writing out ---------------------------------------------------------------
 
-        public bool isCode()
+        public void writeSectionTblEntry(OutputFile outfile)
         {
-            return (flags & IMAGE_SCN_CNT_CODE) != 0;
+            outfile.putFixedString(name, 8);
+
+            outfile.putFour(memSize);
+            outfile.putFour(memPos);
+            outfile.putFour(fileSize);
+            outfile.putFour(filePos);
+
+            //line numbers are deprecated, we don't write them
+            outfile.putFour(relocTblPos);
+            outfile.putFour(0);
+            outfile.putFour((uint)relocations.Count);
+            outfile.putFour(0);
+
+            uint flagval = (uint)flags;
+            flagval = flagval | ((uint)dataAlignment << 20);
+            outfile.putFour(flagval);
         }
 
-        public bool isInitializedData()
+        public void writeSectionData(OutputFile outfile)
         {
-            return (flags & IMAGE_SCN_CNT_INITIALIZED_DATA) != 0;
+            outfile.putRange(data);
+
+            //these get written directly after the section data
+            CoffRelocation.write(outfile, relocTblPos);
+            CoffLineNumber.write(outfile);
+        }
+    }
+
+    //-----------------------------------------------------------------------------
+
+    //relocation tbl entry
+    public class CoffRelocation
+    {
+        public enum Reloctype
+        {
+            ABSOLUTE = 0x00,
+            DIR32 = 0x06,
+            DIR32NB = 0x07,
+            SECTION = 0x0a,
+            SECREL = 0x0b,
+            TOKEN = 0x0c,
+            SECREL7 = 0x0d,
+            REL32 = 0x14
         }
 
-        public bool isUninitializedData()
+        public uint address;
+        public uint symTblIdx;
+        public Reloctype type;
+
+        public CoffRelocation(uint _addr, uint _idx, Reloctype _type)
         {
-            return (flags & IMAGE_SCN_CNT_UNINITIALIZED_DATA) != 0;
+            address = _addr;
+            symTblIdx = _idx;
+            type = _type;
         }
 
-        public bool isDiscardable()
+        public void writeToFile(OutputFile outfile)
         {
-            return (flags & IMAGE_SCN_MEM_DISCARDABLE) != 0;
+            outfile.putFour(address);
+            outfile.putFour(symTblIdx);
+            outfile.putTwo((uint)type);
         }
 
-        public bool isExecutable()
+        public static List<CoffRelocation> read(SourceFile source, uint pos, uint count)
         {
-            return (flags & IMAGE_SCN_MEM_EXECUTE) != 0;
+            return null;        //not implemented yet
         }
 
-        public bool isReadable()
+        public static void write(OutputFile outfile, uint pos)
         {
-            return (flags & IMAGE_SCN_MEM_READ) != 0;
+            //not implemented yet
+        }
+    }
+
+    //line number tbl entry
+    public class CoffLineNumber
+    {
+        public static List<CoffLineNumber> read(SourceFile source, uint pos, uint count)
+        {
+            return null;        //we don't read in line numbers
         }
 
-        public bool isWritable()
+        public static void write(OutputFile outfile)
         {
-            return (flags & IMAGE_SCN_MEM_WRITE) != 0;
-        }
-        
-//- displaying ---------------------------------------------------------------
-
-        public String displayData()
-        {
-            StringBuilder dataStr = new StringBuilder();       //the whole thing as one LONG string
-            StringBuilder ascii = new StringBuilder();      //the ascii representation of the bytes on one line
-
-            int bpos = 0;
-            uint loc = memloc;
-            for (; bpos < data.Length; )
-            {
-                if (bpos % 16 == 0)
-                {
-                    dataStr.Append(loc.ToString("X8") + ": ");         //address field if at start of line
-                }
-
-                uint b = data[bpos];
-                dataStr.Append(b.ToString("X2"));                                              //single byte value in hex
-                dataStr.Append(" ");
-                ascii.Append((b >= 0x20 && b <= 0x7E) ? ((char)b).ToString() : ".");        //and its ascii equivalent
-                bpos++;
-                loc++;
-
-                if (bpos % 16 == 0)
-                {
-                    dataStr.AppendLine(ascii.ToString());      //ascii field if at end of line
-                    ascii.Clear();
-                }
-            }
-            if (bpos % 16 != 0)             //fill out partial last line
-            {
-                int remainder = (bpos % 16);
-                for (; remainder < 16; remainder++)
-                {
-                    dataStr.Append("   ");                  //space over to line up ascii field
-                    
-                }
-                dataStr.AppendLine(ascii.ToString());
-            }
-            return dataStr.ToString();
+            //we don't write out line numbers
         }
     }
 }

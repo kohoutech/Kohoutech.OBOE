@@ -1,6 +1,6 @@
 /* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2018  George E Greaney
+Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using System.IO;
+
 
 //https://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files
 //https://msdn.microsoft.com/en-us/library/windows/desktop/ms680547(v=vs.85).aspx#the_.rsrc_section

@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2018  George E Greaney
+Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -130,18 +130,27 @@ namespace Origami.Win32
 
     public class OutputFile
     {
+        static uint INITIAL_SIZE = 0x200;
+        static uint SIZE_DELTA = 0x2000;
+
         String filename;
         byte[] outbuf;
         uint outlen;
         uint outpos;
+        uint maxlen;
 
         //for writing fields to a disk file
-        public OutputFile(String _filename, uint size)
+        public OutputFile(String _filename) : this(_filename, INITIAL_SIZE)
+        {
+        }
+
+        public OutputFile(String _filename, uint filelen)
         {
             filename = _filename;
-            outlen = size;
+            outlen = filelen;
             outbuf = new byte[outlen];
             outpos = 0;
+            maxlen = 0;
         }
 
         public uint getPos()
@@ -149,13 +158,26 @@ namespace Origami.Win32
             return outpos;
         }
 
+        public void checkSpace(uint size)
+        {
+            uint needed = outpos + size;
+            if (needed > outbuf.Length)
+            {
+                byte[] temp = new byte[needed + SIZE_DELTA];
+                outbuf.CopyTo(temp, 0);
+                outbuf = temp;
+            }
+        }
+
         public void putOne(uint val)
         {
+            checkSpace(1);
             outbuf[outpos++] = (byte)(val % 0x100);
         }
 
         public void putTwo(uint val)
         {
+            checkSpace(2);
             byte a = (byte)(val % 0x100);
             val /= 0x100;
             byte b = (byte)(val % 0x100);
@@ -165,6 +187,7 @@ namespace Origami.Win32
 
         public void putFour(uint val)
         {
+            checkSpace(4);
             byte d = (byte)(val % 0x100);
             val /= 0x100;
             byte c = (byte)(val % 0x100);
@@ -181,6 +204,7 @@ namespace Origami.Win32
         //asciiz string
         public void putString(String s)
         {
+            checkSpace((uint)(s.Length + 1));
             for (int i = 0; i < s.Length; i++)
             {
                 outbuf[outpos++] = (byte)s[i];
@@ -191,6 +215,7 @@ namespace Origami.Win32
         //fixed len string
         public void putFixedString(String str, int width)
         {
+            checkSpace((uint)width);
             for (int i = 0; i < width; i++)
             {
                 if (i < str.Length)
@@ -207,12 +232,14 @@ namespace Origami.Win32
         public void putRange(byte[] bytes)
         {
             uint len = (uint)bytes.Length;
+            checkSpace(len);
             Array.Copy(bytes, 0, outbuf, outpos, len);
             outpos += len;
         }
 
         public void putZeros(uint len)
         {
+            checkSpace(len);
             for (int i = 0; i < len; i++)
             {
                 outbuf[outpos++] = 0;
@@ -221,6 +248,7 @@ namespace Origami.Win32
 
         public void seek(uint pos)
         {
+            checkSpace(pos - outpos);
             outpos = pos;
         }
 

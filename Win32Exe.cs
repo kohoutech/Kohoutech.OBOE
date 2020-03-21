@@ -1,6 +1,6 @@
 ﻿/* ----------------------------------------------------------------------------
 Origami Win32 Library
-Copyright (C) 1998-2018  George E Greaney
+Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -28,11 +28,18 @@ using System.Text;
 
 namespace Origami.Win32
 {
-    public class Win32Exe : Win32Coff
+    public class Win32Exe
     {
         public String filename;
 
         public MsDosHeader dosHeader;
+
+        const int IMAGE_FILE_MACHINE_I386 = 0x14c;
+
+        //coff header fields
+        public uint machine;
+        public uint timeStamp;
+        public uint characteristics;
 
         //optional header fields
         public uint magicNum;
@@ -84,16 +91,25 @@ namespace Origami.Win32
         public DataDirectory CLRRuntimeHeader;
         public DataDirectory reserved;
 
+        public List<Section> sections;
+
         //standard sections
         public ExportTable exportTable;
         public ImportTable importTable;
         public ResourceTable resourceTable;
 
-        public Win32Exe() : base()
+        public SymbolTable symbolTable;
+
+        public Win32Exe()
         {
             filename = null;
 
             dosHeader = null;
+
+            //coff header fields
+            machine = IMAGE_FILE_MACHINE_I386;
+            timeStamp = 0;
+            characteristics = 0;
 
             //optional header fields
             magicNum = 0;
@@ -145,88 +161,92 @@ namespace Origami.Win32
             CLRRuntimeHeader = null;
             reserved = null;
 
+            sections = new List<Section>();
+
             //standard sections
             exportTable = null;
             importTable = null;
             resourceTable = null;
+
+            symbolTable = new SymbolTable();
         }
 
 //- reading in ----------------------------------------------------------------
 
-        public void readFile(String _filename)
-        {
-            filename = _filename;
+        //public void readFile(String _filename)
+        //{
+        //    filename = _filename;
 
-            SourceFile source = new SourceFile(filename);
+        //    SourceFile source = new SourceFile(filename);
 
-            dosHeader = MsDosHeader.readMSDOSHeader(source);
-            source.seek(dosHeader.e_lfanew);
-            uint pesig = source.getFour();
-            if (pesig != 0x00004550)
-            {
-                throw new Win32ReadException("this is not a valid win32 executable file");
-            }
+        //    dosHeader = MsDosHeader.readMSDOSHeader(source);
+        //    source.seek(dosHeader.e_lfanew);
+        //    uint pesig = source.getFour();
+        //    if (pesig != 0x00004550)
+        //    {
+        //        throw new Win32ReadException("this is not a valid win32 executable file");
+        //    }
 
-            readCoffHeader(source);
-            readOptionalHeader(source);
-            loadSections(source);
-            foreach (Section section in sections)
-            {
-                section.imageBase = imageBase;          //sections in exe/dll have an image base
-            }
-            //getResourceTable(source);
-        }
+        //    readCoffHeader(source);
+        //    readOptionalHeader(source);
+        //    loadSections(source);
+        //    foreach (Section section in sections)
+        //    {
+        //        section.imageBase = imageBase;          //sections in exe/dll have an image base
+        //    }
+        //    //getResourceTable(source);
+        //}
 
-        private void readOptionalHeader(SourceFile source)
-        {
-            magicNum = source.getTwo();
-            majorLinkerVersion = source.getOne();
-            minorLinkerVersion = source.getOne();
-            sizeOfCode = source.getFour();
-            sizeOfInitializedData = source.getFour();
-            sizeOfUninitializedData = source.getFour();
-            addressOfEntryPoint = source.getFour();
-            baseOfCode = source.getFour();
-            baseOfData = source.getFour();
-            imageBase = source.getFour();
-            sectionAlignment = source.getFour();
-            fileAlignment = source.getFour();
-            majorOSVersion = source.getTwo();
-            minorOSVersion = source.getTwo();
-            majorImageVersion = source.getTwo();
-            minorImageVersion = source.getTwo();
-            majorSubsystemVersion = source.getTwo();
-            minorSubsystemVersion = source.getTwo();
-            win32VersionValue = source.getFour();
-            sizeOfImage = source.getFour();
-            sizeOfHeaders = source.getFour();
-            checksum = source.getFour();
-            subsystem = source.getTwo();
-            dLLCharacteristics = source.getTwo();
-            sizeOfStackReserve = source.getFour();
-            sizeOfStackCommit = source.getFour();
-            sizeOfHeapReserve = source.getFour();
-            sizeOfHeapCommit = source.getFour();
-            loaderFlags = source.getFour();
-            numberOfRvaAndSizes = source.getFour();
+        //private void readOptionalHeader(SourceFile source)
+        //{
+        //    magicNum = source.getTwo();
+        //    majorLinkerVersion = source.getOne();
+        //    minorLinkerVersion = source.getOne();
+        //    sizeOfCode = source.getFour();
+        //    sizeOfInitializedData = source.getFour();
+        //    sizeOfUninitializedData = source.getFour();
+        //    addressOfEntryPoint = source.getFour();
+        //    baseOfCode = source.getFour();
+        //    baseOfData = source.getFour();
+        //    imageBase = source.getFour();
+        //    sectionAlignment = source.getFour();
+        //    fileAlignment = source.getFour();
+        //    majorOSVersion = source.getTwo();
+        //    minorOSVersion = source.getTwo();
+        //    majorImageVersion = source.getTwo();
+        //    minorImageVersion = source.getTwo();
+        //    majorSubsystemVersion = source.getTwo();
+        //    minorSubsystemVersion = source.getTwo();
+        //    win32VersionValue = source.getFour();
+        //    sizeOfImage = source.getFour();
+        //    sizeOfHeaders = source.getFour();
+        //    checksum = source.getFour();
+        //    subsystem = source.getTwo();
+        //    dLLCharacteristics = source.getTwo();
+        //    sizeOfStackReserve = source.getFour();
+        //    sizeOfStackCommit = source.getFour();
+        //    sizeOfHeapReserve = source.getFour();
+        //    sizeOfHeapCommit = source.getFour();
+        //    loaderFlags = source.getFour();
+        //    numberOfRvaAndSizes = source.getFour();
 
-            dExportTable = DataDirectory.readDataDirectory(source);
-            dImportTable = DataDirectory.readDataDirectory(source);
-            dResourceTable = DataDirectory.readDataDirectory(source);
-            exceptionTable = DataDirectory.readDataDirectory(source);
-            certificatesTable = DataDirectory.readDataDirectory(source);
-            baseRelocationTable = DataDirectory.readDataDirectory(source);
-            debugTable = DataDirectory.readDataDirectory(source);
-            architecture = DataDirectory.readDataDirectory(source);
-            globalPtr = DataDirectory.readDataDirectory(source);
-            threadLocalStorageTable = DataDirectory.readDataDirectory(source);
-            loadConfigurationTable = DataDirectory.readDataDirectory(source);
-            boundImportTable = DataDirectory.readDataDirectory(source);
-            importAddressTable = DataDirectory.readDataDirectory(source);
-            delayImportDescriptor = DataDirectory.readDataDirectory(source);
-            CLRRuntimeHeader = DataDirectory.readDataDirectory(source);
-            reserved = DataDirectory.readDataDirectory(source);
-        }
+        //    dExportTable = DataDirectory.readDataDirectory(source);
+        //    dImportTable = DataDirectory.readDataDirectory(source);
+        //    dResourceTable = DataDirectory.readDataDirectory(source);
+        //    exceptionTable = DataDirectory.readDataDirectory(source);
+        //    certificatesTable = DataDirectory.readDataDirectory(source);
+        //    baseRelocationTable = DataDirectory.readDataDirectory(source);
+        //    debugTable = DataDirectory.readDataDirectory(source);
+        //    architecture = DataDirectory.readDataDirectory(source);
+        //    globalPtr = DataDirectory.readDataDirectory(source);
+        //    threadLocalStorageTable = DataDirectory.readDataDirectory(source);
+        //    loadConfigurationTable = DataDirectory.readDataDirectory(source);
+        //    boundImportTable = DataDirectory.readDataDirectory(source);
+        //    importAddressTable = DataDirectory.readDataDirectory(source);
+        //    delayImportDescriptor = DataDirectory.readDataDirectory(source);
+        //    CLRRuntimeHeader = DataDirectory.readDataDirectory(source);
+        //    reserved = DataDirectory.readDataDirectory(source);
+        //}
 
         //private void getResourceTable(SourceFile source)
         //{
@@ -251,15 +271,47 @@ namespace Origami.Win32
         public void layoutImage()
         {
             dosHeader = new MsDosHeader();
-            dosHeader.e_lfanew = 0x200;
+            dosHeader.e_lfanew = 0x80;
         }
 
         public void writeFile(String filename)
         {
-            OutputFile outfile = new OutputFile(filename, 0x200);
+            OutputFile outfile = new OutputFile(filename);
             dosHeader.writeOut(outfile);
-            outfile.putZeros(0x200 - 0x40);
+            outfile.putZeros(0x80 - 0x40);
+
+            writeCoffHeader(outfile);
+            writeOptionalHeader(outfile);
+            writeSectionTable(outfile);
+            writeSectionData(outfile);
+
             outfile.writeOut();
+        }
+
+        public void writeCoffHeader(OutputFile outfile)
+        {
+            outfile.putFour(0x00004550);            //PE sig
+            outfile.putTwo(machine);
+            outfile.putTwo((uint)sections.Count);
+            outfile.putFour(timeStamp);
+            symbolTable.writeHeader(outfile);
+            outfile.putTwo(0xe0);
+            outfile.putTwo(characteristics);
+        }
+
+        private void writeOptionalHeader(OutputFile outfile)
+        {
+            
+        }
+
+        private void writeSectionTable(OutputFile outfile)
+        {
+            
+        }
+
+        private void writeSectionData(OutputFile outfile)
+        {
+            
         }
     }
 
@@ -318,7 +370,7 @@ namespace Origami.Win32
                 dosHeader.signature = source.getTwo();
                 if (dosHeader.signature != 0x5a4d)
                 {
-                    throw new Win32ReadException("this is not a valid win32 executable file");
+                    throw new Win32FormatException("this is not a valid win32 executable file");
                 }
 
                 dosHeader.lastsize = source.getTwo();
@@ -391,6 +443,29 @@ namespace Origami.Win32
             }
         }
 
+//- symbol tbl ------------------------------------------------------------
+
+        public class SymbolTable
+        {
+            public uint symTablePtr;
+            public uint symTableCount;
+
+            public void writeHeader(OutputFile outfile)
+            {
+                outfile.putTwo(symTablePtr);
+                outfile.putTwo(symTableCount);
+            }
+        }
+
+        //- error handling ------------------------------------------------------------
+
+        class Win32FormatException : Exception
+        {
+            public Win32FormatException(string message)
+                : base(message)
+            {
+            }
+        }
 }
 
 //Console.WriteLine("there's no sun in the shadow of the wizard");
