@@ -26,7 +26,7 @@ using System.IO;
 namespace Origami.Win32
 {
 
-//- reading in ----------------------------------------------------------------
+    //- reading in ----------------------------------------------------------------
 
     public class SourceFile
     {
@@ -126,7 +126,7 @@ namespace Origami.Win32
         }
     }
 
-//- writing out ---------------------------------------------------------------
+    //- writing out ---------------------------------------------------------------
 
     public class OutputFile
     {
@@ -140,7 +140,8 @@ namespace Origami.Win32
         uint maxlen;
 
         //for writing fields to a disk file
-        public OutputFile(String _filename) : this(_filename, INITIAL_SIZE)
+        public OutputFile(String _filename)
+            : this(_filename, INITIAL_SIZE)
         {
         }
 
@@ -188,13 +189,13 @@ namespace Origami.Win32
         public void putFour(uint val)
         {
             checkSpace(4);
-            byte d = (byte)(val % 0x100);
-            val /= 0x100;
-            byte c = (byte)(val % 0x100);
+            byte a = (byte)(val % 0x100);
             val /= 0x100;
             byte b = (byte)(val % 0x100);
             val /= 0x100;
-            byte a = (byte)(val % 0x100);
+            byte c = (byte)(val % 0x100);
+            val /= 0x100;
+            byte d = (byte)(val % 0x100);
             outbuf[outpos++] = a;
             outbuf[outpos++] = b;
             outbuf[outpos++] = c;
@@ -254,6 +255,14 @@ namespace Origami.Win32
 
         public void writeOut()
         {
+            //remove unused space at end of file
+            //any padding needed at end of file should be handled by caller
+            if (outpos < outbuf.Length)
+            {
+                byte[] newbuf = new byte[outpos];
+                Array.Copy(outbuf, newbuf, outpos);
+                outbuf = newbuf;
+            }
             File.WriteAllBytes(filename, outbuf);
         }
     }
