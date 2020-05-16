@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Win32 Library
+Origami Kohoutech Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@ using System.Text;
 //https://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files#Section_Table
 //https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#section-table-section-headers
 
-namespace Origami.Win32
+namespace Kohoutech.Win32
 {
     public class Section
     {
@@ -148,8 +148,8 @@ namespace Origami.Win32
 
             uint relocPos = source.getFour();
             uint lineNumPos = source.getFour();
-            uint relocCount = source.getFour();
-            uint lineNumCount = source.getFour();
+            uint relocCount = source.getTwo();
+            uint lineNumCount = source.getTwo();
             section.relocations = CoffRelocation.read(source, relocPos, relocCount);
             section.linenumbers = CoffLineNumber.read(source, lineNumPos, lineNumCount);
 
@@ -159,9 +159,8 @@ namespace Origami.Win32
             flagval &= ~((uint)0x00f00000);
             section.flags = (Flags)flagval;
 
-            //load section data - read in all the bytes that will be loaded into mem (memsize)
-            //and skip the remaining section bytes (filesize) to pad out the data to a file boundary
-            section.data = new List<Byte>(source.getRange(section.filePos, section.memSize));
+            //load section data
+            section.data = new List<Byte>(source.getRange(section.filePos, section.fileSize));
 
             return section;
         }
@@ -190,11 +189,14 @@ namespace Origami.Win32
 
         public void writeSectionData(OutputFile outfile)
         {
+            uint pos = outfile.getPos();
             outfile.putRange(data.ToArray());
 
             //these get written directly after the section data
             CoffRelocation.write(outfile, relocTblPos);
             CoffLineNumber.write(outfile);
+            uint padding = fileSize - (outfile.getPos() - pos);
+            outfile.putZeros(padding);
         }
     }
 
@@ -235,7 +237,7 @@ namespace Origami.Win32
 
         public static List<CoffRelocation> read(SourceFile source, uint pos, uint count)
         {
-            return null;        //not implemented yet
+            return new List<CoffRelocation>();        //empty list - not implemented yet
         }
 
         public static void write(OutputFile outfile, uint pos)
@@ -244,13 +246,15 @@ namespace Origami.Win32
         }
     }
 
+    //-----------------------------------------------------------------------------
+
     //line number tbl entry
-    //Microsoft states that these are deprecated
+    //Microsoft states that these are deprecated - who are we to argue?
     public class CoffLineNumber
     {
         public static List<CoffLineNumber> read(SourceFile source, uint pos, uint count)
         {
-            return null;        //we don't read in line numbers
+            return new List<CoffLineNumber>();        //empty list - we don't read in line numbers
         }
 
         public static void write(OutputFile outfile)

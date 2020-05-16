@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Win32 Library
+Kohoutech Win32 Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -26,23 +26,25 @@ using System.Text;
 
 //https://docs.microsoft.com/en-us/windows/desktop/debug/pe-format
 
-namespace Origami.Win32
+namespace Kohoutech.Win32
 {
     public class Win32Coff
     {
-        const int IMAGE_FILE_MACHINE_I386 = 0x14c;
 
         //coff header fields
-        public int machine;
+        public MachineType machine;
         public uint timeStamp;
         public int characteristics;
+        uint optionalHdrSize;
 
         public List<Section> sections;
         public Dictionary<String, Section> secNames;
+        uint sectionCount;
 
         public List<CoffSymbol> symbolTbl;
         public Dictionary<String, CoffSymbol> symNames;
         uint symbolTblAddr;
+        uint symbolCount;
 
         public Dictionary<int, String> stringTbl;
         public int strTblIdx;
@@ -50,7 +52,7 @@ namespace Origami.Win32
         //cons
         public Win32Coff()
         {
-            machine = IMAGE_FILE_MACHINE_I386;
+            machine = MachineType.IMAGE_FILE_MACHINE_I386;
             timeStamp = 0;
             characteristics = 0;
 
@@ -68,67 +70,74 @@ namespace Origami.Win32
 
         public void readCoffHeader(SourceFile source)
         {
-            //machine = (int)source.getTwo();
-            //sectionCount = (int)source.getTwo();
-            //timeStamp = source.getFour();
-            //symbolTblAddr = source.getFour();
-            //symbolCount = source.getFour();
-            //optionalHdrSize = (int)source.getTwo();
-            //characteristics = (int)source.getTwo();         
+            machine = (MachineType)source.getTwo();
+            sectionCount = source.getTwo();
+            timeStamp = source.getFour();
+            symbolTblAddr = source.getFour();
+            symbolCount = source.getFour();
+            optionalHdrSize = source.getTwo();
+            characteristics = (int)source.getTwo();         
         }
 
-        public void loadSections(SourceFile source)
+        public void readSections(SourceFile source)
         {
-            //for (int i = 0; i < sectionCount; i++)
-            //{
-            //    Section section = Section.loadSection(source);
-            //    sections.Add(section);
-            //}
+            for (int i = 0; i < sectionCount; i++)
+            {
+                Section section = Section.readSection(source);
+                section.secNum = i + 1;
+                sections.Add(section);
+            }
+        }
+
+        public void loadSymbolTable(SourceFile source)
+        {
+            source.seek(symbolTblAddr);
+            for (int i = 0; i < symbolCount; i++)
+            {
+                CoffSymbol sym = CoffSymbol.readSymbol(source);
+                symbolTbl.Add(sym);
+                symNames[sym.name] = sym;
+            }
         }
 
         public void loadStringTable(SourceFile source)
         {
-            //uint pos = symbolTblAddr + (symbolCount * 0x12);
-            //source.seek(pos);
-            //uint len = source.getFour() - 4;
-            //byte[] data = source.getRange(len);
-            //String str = "";
-            //int idx = 4;
-            //for (int i = 0; i < len; i++)
-            //{
-            //    if (data[i] != 0)
-            //    {
-            //        str += (char)data[i];
-            //    }
-            //    else
-            //    {
-            //        stringTbl.Add(idx, str);
-            //        str = "";
-            //        idx = i + 5;
-            //    }
-            //}
+            uint pos = symbolTblAddr + (symbolCount * 0x12);
+            source.seek(pos);
+            uint len = source.getFour() - 4;
+            if (len > 0)
+            {
+                byte[] data = source.getRange(len);
+                String str = "";
+                int idx = 4;
+                for (int i = 0; i < len; i++)
+                {
+                    if (data[i] != 0)
+                    {
+                        str += (char)data[i];
+                    }
+                    else
+                    {
+                        stringTbl.Add(idx, str);        //end of str, add it to string tbl
+                        str = "";                       
+                        idx = i + 5;                    //index of next str
+                    }
+                }
+            }
         }
 
-        public void loadReloctionTable(SourceFile source)
+        public static Win32Coff readFromFile(String filename)
         {
-            throw new NotImplementedException();
+            Win32Coff objfile = new Win32Coff();
+
+            SourceFile source = new SourceFile(filename);
+            objfile.readCoffHeader(source);
+            objfile.readSections(source);
+            objfile.loadSymbolTable(source);
+            objfile.loadStringTable(source);
+
+            return objfile;
         }
-
-        //public static Win32Obj readFromFile(String filename)
-        //{
-        //    Win32Obj objfile = null;
-        //    if (File.Exists(filename))
-        //    {
-        //        objfile = new Win32Obj(filename);
-        //        SourceFile source = new SourceFile(filename);
-
-        //        objfile.readCoffHeader(source);
-        //        objfile.loadSections(source);
-        //        //objfile.loadReloctionTable(source);
-        //        objfile.loadStringTable(source);
-        //    }
-        //    return objfile;
-        //}
 
         //- writing out ---------------------------------------------------------------
 
@@ -288,13 +297,13 @@ namespace Origami.Win32
 
     public class CoffSymbol
     {
-        String name;        //the symbol name string if 8 chars or less
-        int namePos;        //or its pos in the string tbl (-1 otherwise)
-        uint value;
-        int sectionNum;
-        uint type;
-        CoffStorageClass storageClass;
-        uint auxSymbolCount;
+        public String name;        //the symbol name string if 8 chars or less
+        public int namePos;        //or its pos in the string tbl (-1 otherwise)
+        public uint value;
+        public int sectionNum;
+        public uint type;
+        public CoffStorageClass storageClass;
+        public uint auxSymbolCount;
 
         public CoffSymbol(String _name, int _namePos, uint _val, int _secnum, uint _type, CoffStorageClass _storage, uint _aux)
         {
@@ -305,6 +314,34 @@ namespace Origami.Win32
             type = _type;
             storageClass = _storage;
             auxSymbolCount = _aux;
+        }
+
+        public static CoffSymbol readSymbol(SourceFile source)
+        {
+            //get short name or pos in string tbl
+            uint nameloc = source.getPos();
+            uint namezeros = source.getFour();
+            int namepos = -1;
+            String name = "";
+            if (namezeros == 0)
+            {
+                namepos = (int)source.getFour();
+            }
+            else
+            {
+                source.seek(nameloc);
+                name = source.getAsciiString(8);
+            }
+
+            uint val = source.getFour();
+            uint secval = source.getTwo();
+            int secnum = (secval < 0x8000) ? (int)secval : ((int)secval - 0x10000);
+            uint type = source.getTwo();
+            CoffStorageClass stoarge = (CoffStorageClass)source.getOne();
+            uint aux = source.getOne();
+
+            CoffSymbol sym = new CoffSymbol(name, namepos, val, secnum, type, stoarge, aux);
+            return sym;
         }
 
         public void writeSymbol(OutputFile outfile)
@@ -338,6 +375,13 @@ namespace Origami.Win32
     }
 
     //-------------------------------------------------------------------------
+
+    public enum MachineType
+    {
+        IMAGE_FILE_MACHINE_I386 = 0x14c,
+        IMAGE_FILE_MACHINE_IA64 = 0x0200,
+        IMAGE_FILE_MACHINE_AMD64 = 0x8664
+    }
 
     //there are others, but these are the only ones Microsoft uses currently
     public enum CoffStorageClass

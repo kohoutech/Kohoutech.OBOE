@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Win32 Library
+Kohoutech Win32 Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -22,9 +22,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Origami.Win32
+namespace Kohoutech.Win32
 {
     public class ExportTable
     {
+        internal Section createSection()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

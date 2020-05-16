@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Win32 Library
+Kohoutech Win32 Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Origami.Win32
+namespace Kohoutech.Win32
 {
 
     //- reading in ----------------------------------------------------------------
@@ -34,7 +34,7 @@ namespace Origami.Win32
         byte[] srcbuf;
         uint srclen;
         uint srcpos;
-
+        
         //for reading fields from a disk file
         public SourceFile(String _filename)
         {

@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
-Origami Win32 Library
+Origami Kohoutech Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@ using System.IO;
 //https://msdn.microsoft.com/en-us/library/windows/desktop/ms680547(v=vs.85).aspx#the_.rsrc_section
 //https://msdn.microsoft.com/en-us/library/ms648009(v=vs.85).aspx
 
-namespace Origami.Win32
+namespace Kohoutech.Win32
 {
     public class ResourceTable
     {
@@ -862,6 +862,11 @@ namespace Origami.Win32
         {
             List<String> result = null;
             return result;
+        }
+
+        internal Section createSection()
+        {
+            throw new NotImplementedException();
         }
     }
 
