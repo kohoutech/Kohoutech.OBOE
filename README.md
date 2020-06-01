@@ -1,8 +1,10 @@
-# Kohoutech.Win32
+# Kohoutech.OBOE
 
-library for displaying and editing Windows internals
+OBOE - Origami Binary for Objects and Executables
 
-<a href="https://kohoutech.github.io/Kohoutech.Win32/">project documentation</a><br/>
+a library for working with object and executable files
 
-this library is available as a <a href="https://www.nuget.org/packages/Kohoutech.Win32/">NuGet package</a><br/>
+<a href="https://kohoutech.github.io/Kohoutech.OBOE/">project documentation</a><br/>
+
+this library is available as a <a href="https://www.nuget.org/packages/Kohoutech.OBOE/">NuGet package</a><br/>
 
