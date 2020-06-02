@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Kohoutech Win32 Library
+Kohoutech OBOE Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Kohoutech.Win32
+namespace Kohoutech.OBOE
 {
 
     //- reading in ----------------------------------------------------------------
@@ -73,6 +73,7 @@ namespace Kohoutech.Win32
             return result;
         }
 
+        //little endian unsigned int values
         public uint getOne()
         {
             byte a = srcbuf[srcpos++];
@@ -111,6 +112,19 @@ namespace Kohoutech.Win32
                 {
                     result += (char)a;
                 }
+            }
+            return result;
+        }
+
+        //C style string
+        public String getAsciiZString()
+        {
+            String result = "";
+            byte a = srcbuf[srcpos++];
+            while (a != '\0')
+            {
+                result = result + (char)a;
+                a = srcbuf[srcpos++];
             }
             return result;
         }
@@ -159,6 +173,7 @@ namespace Kohoutech.Win32
             return outpos;
         }
 
+        //grow the outbuf as needed
         public void checkSpace(uint size)
         {
             uint needed = outpos + size;
@@ -168,8 +183,13 @@ namespace Kohoutech.Win32
                 outbuf.CopyTo(temp, 0);
                 outbuf = temp;
             }
+            if (needed > maxlen)
+            {
+                maxlen = needed;
+            }
         }
 
+        //little endian unsigned int values
         public void putOne(uint val)
         {
             checkSpace(1);
@@ -238,6 +258,7 @@ namespace Kohoutech.Win32
             outpos += len;
         }
 
+        //padding out data fields
         public void putZeros(uint len)
         {
             checkSpace(len);
@@ -249,18 +270,21 @@ namespace Kohoutech.Win32
 
         public void seek(uint pos)
         {
-            checkSpace(pos - outpos);
+            if (pos > outpos)                   //if we are seeking beyond the cur pos in the output buf
+            {
+                checkSpace(pos - outpos);
+            }
             outpos = pos;
         }
 
         public void writeOut()
         {
             //remove unused space at end of file
-            //any padding needed at end of file should be handled by caller
-            if (outpos < outbuf.Length)
+            //any padding needed at end of file should be already handled by caller
+            if (maxlen < outbuf.Length)
             {
-                byte[] newbuf = new byte[outpos];
-                Array.Copy(outbuf, newbuf, outpos);
+                byte[] newbuf = new byte[maxlen];
+                Array.Copy(outbuf, newbuf, maxlen);
                 outbuf = newbuf;
             }
             File.WriteAllBytes(filename, outbuf);
