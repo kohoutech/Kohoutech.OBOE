@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Origami Kohoutech Library
+Kohoutech OBOE Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -22,13 +22,35 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Kohoutech.Win32
+namespace Kohoutech.OBOE
 {
-    public class ImportTable
+    public class ExportEntry
     {
-        internal Section createSection()
+        public string name;
+        public int addr;
+
+        public ExportEntry(string _name, int _addr)
         {
-            throw new NotImplementedException();
+            int spidx = _name.IndexOf(' ');
+            if (spidx != -1)
+            {
+                _name = _name.Substring(0, spidx);
+            }
+
+            name = _name;
+            addr = _addr;
+        }
+
+        internal void writeToFile(OutputFile modfile)
+        {
+            modfile.putString(name);
+            modfile.putFour((uint)addr);
+        }
+
+        public override string ToString()
+        {
+            return String.Format("{0}: {1}", addr.ToString("X4"), name);
         }
     }
+
 }

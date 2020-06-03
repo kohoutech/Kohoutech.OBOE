@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Kohoutech Win32 Library
+Kohoutech OBOE Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -22,13 +22,42 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Kohoutech.Win32
+namespace Kohoutech.OBOE
 {
-    public class ExportTable
+    public class ImportEntry
     {
-        internal Section createSection()
+        public enum IMPORTTYPE { DIR32, REL32 };
+
+        public string name;
+        public uint addr;
+        public IMPORTTYPE typ;
+
+        public ImportEntry(string _name, uint _addr, IMPORTTYPE _typ)
         {
-            throw new NotImplementedException();
+            int spidx = _name.IndexOf(' ');
+            if (spidx != -1)
+            {
+                _name = _name.Substring(0, spidx);
+            }
+
+            name = _name;
+            addr = _addr;
+            typ = _typ;
         }
+
+        internal void writeToFile(OutputFile modfile)
+        {
+            modfile.putString(name);
+            modfile.putFour((uint)addr);
+            int b = (typ == IMPORTTYPE.DIR32) ? 0 : 1;
+            modfile.putOne((uint)b);
+        }
+
+        public override string ToString()
+        {
+            return String.Format("{0}: {1} [{2}]", addr.ToString("X4"), name, typ.ToString());
+        }
+
     }
+
 }
