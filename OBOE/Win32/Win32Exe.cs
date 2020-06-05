@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Kohoutech Win32 Library
+Kohoutech OBOE Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@ using System.Text;
 //https://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files
 //https://docs.microsoft.com/en-us/windows/desktop/debug/pe-format
 
-namespace Kohoutech.Win32
+namespace Kohoutech.OBOE
 {
-    public class Win32Exe
+    public class Win32Exe : Win32Coff
     {
         public String filename;
         public bool isDLL;
@@ -90,7 +90,7 @@ namespace Kohoutech.Win32
         public DataDirectory CLRRuntimeHeader;
         public DataDirectory reserved;
 
-        public List<Section> sections;
+        public List<CoffSection> sections;
 
         //standard sections
         public ImportTable importTable;
@@ -159,7 +159,7 @@ namespace Kohoutech.Win32
             CLRRuntimeHeader = new DataDirectory();
             reserved = new DataDirectory();
 
-            sections = new List<Section>();
+            sections = new List<CoffSection>();
 
             //standard sections
             exportTable = null;
@@ -270,7 +270,7 @@ namespace Kohoutech.Win32
             uint secMem = 0x1000;
             for (int i = 0; i < sections.Count; i++)
             {
-                Section sec = sections[i];
+                CoffSection sec = sections[i];
                 sec.filePos = secStart;
                 sec.fileSize = ((((uint)sec.data.Count) + (fileAlignment - 1) / fileAlignment) * fileAlignment);
                 secStart += sec.fileSize;
@@ -367,7 +367,7 @@ namespace Kohoutech.Win32
             if (importTable != null)
             {
                 importSecNum = sections.Count;
-                Section importSection = importTable.createSection();
+                CoffSection importSection = importTable.createSection();
                 sections.Add(importSection);
             }
 
@@ -375,7 +375,7 @@ namespace Kohoutech.Win32
             if (exportTable != null)
             {
                 exportSecNum = sections.Count;
-                Section exportSection = exportTable.createSection();
+                CoffSection exportSection = exportTable.createSection();
                 sections.Add(exportSection);
             }
 
@@ -383,7 +383,7 @@ namespace Kohoutech.Win32
             if (resourceTable != null)
             {
                 resourceSecNum = sections.Count;
-                Section resourceSection = resourceTable.createSection();
+                CoffSection resourceSection = resourceTable.createSection();
                 sections.Add(resourceSection);
             }
 
@@ -564,6 +564,22 @@ namespace Kohoutech.Win32
         {
             outfile.putFour(rva);
             outfile.putFour(size);
+        }
+    }
+
+    public class ImportTable
+    {
+        internal CoffSection createSection()
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    public class ExportTable
+    {
+        internal CoffSection createSection()
+        {
+            throw new NotImplementedException();
         }
     }
 
