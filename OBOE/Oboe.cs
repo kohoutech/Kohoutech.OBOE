@@ -29,20 +29,24 @@ namespace Kohoutech.OBOE
 {
     public class Oboe
     {
-        public static int OBOEVERSION = 1;
-        public static int OBOEBLOCK = 1000;
-        public static int BSSBLOCK = 1001;
+        public const int SECTIONENTRYSIZE = 12;
 
         //header vals
         public string sig;
-        public int version;
+        public int extHdrSize;
         public List<Section> sections;
 
         public Oboe(string name)
         {
             sig = "OBOE";
-            version = OBOEVERSION;
+            extHdrSize = 0;
             sections = new List<Section>();
+        }
+
+        public void addSection(Section sec)
+        {
+            sections.Add(sec);
+            sec.num = sections.Count;
         }
 
         //- writing out to file -----------------------------------------------
@@ -58,17 +62,14 @@ namespace Kohoutech.OBOE
         {
             //write header
             outfile.putFixedString(sig, 4);
-            outfile.putFour((uint)version);
+            outfile.putFour((uint)extHdrSize);
             outfile.putFour((uint)sections.Count);
             writeExtendedHeader(outfile);
 
             //write initial section tbl
+            uint sectblsize = (uint)(sections.Count * SECTIONENTRYSIZE);
             uint sectbl = outfile.getPos();
-            for (int i = 0; i < sections.Count; i++)
-            {
-                outfile.putFour(0);     //addr
-                outfile.putFour(0);     //size
-            }
+            outfile.skip(sectblsize);
 
             //write section data
             uint pos = outfile.getPos();
@@ -84,6 +85,7 @@ namespace Kohoutech.OBOE
             outfile.seek(sectbl);
             foreach (Section sec in sections)
             {
+                outfile.putFour(sec.sectype);
                 outfile.putFour(sec.addr);
                 outfile.putFour(sec.size);
             }
@@ -100,8 +102,8 @@ namespace Kohoutech.OBOE
             //print out text file report for error checking
             StreamWriter txtout = File.CreateText(dumpname);
 
-            txtout.WriteLine(sig);
-            txtout.WriteLine(version.ToString());
+            txtout.WriteLine("signature: {0}",sig);
+            txtout.WriteLine("extended header size: {0}",extHdrSize.ToString("X4"));
             txtout.WriteLine();
             txtout.WriteLine("section count: {0}", sections.Count.ToString());
             foreach (Section sec in sections)

@@ -268,6 +268,12 @@ namespace Kohoutech.OBOE
             }
         }
 
+        public void skip(uint delta)
+        {
+            uint newpos = outpos + delta;
+            seek(newpos);
+        }
+
         public void seek(uint pos)
         {
             if (pos > outpos)                   //if we are seeking beyond the cur pos in the output buf

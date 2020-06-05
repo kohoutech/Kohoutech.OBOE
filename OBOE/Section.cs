@@ -26,17 +26,17 @@ using System.IO;
 
 namespace Kohoutech.OBOE
 {
-    //base class
+    //section base class
     public class Section
     {
-        public int num;
+        public int num;             //section's pos in the section table
         public string name;
-        public int sectype;
+        public uint sectype;
         public uint addr;           //for storage
         public uint size;
 
         //cons
-        public Section(string _name, int _sectype)
+        public Section(string _name, uint _sectype)
         {
             num = 0;
             name = _name;
@@ -47,8 +47,7 @@ namespace Kohoutech.OBOE
 
         public virtual void writeOut(OutputFile outfile)
         {
-            outfile.putString(name);
-            outfile.putFour((uint)sectype);
+            outfile.putString(name);            
         }
 
         public virtual void dumpSection(StreamWriter txtout)
@@ -57,128 +56,6 @@ namespace Kohoutech.OBOE
             txtout.WriteLine("name: {0}", name);
             txtout.WriteLine("section type: {0}", sectype);
             txtout.WriteLine("-------");
-        }
-    }
-
-    //-------------------------------------------------------------------------
-
-    public class OboeBlock : Section
-    {
-        //data vals
-        public List<byte> blockdata;
-        public List<ImportEntry> imports;
-        public List<ExportEntry> exports;
-
-        //cons
-        public OboeBlock(string name) : base(name, Oboe.OBOEBLOCK)
-        {
-            blockdata = new List<byte>();
-            imports = new List<ImportEntry>();
-            exports = new List<ExportEntry>();
-        }
-
-        //- writing out -------------------------------------------------------
-
-        public override void writeOut(OutputFile outfile)
-        {
-            base.writeOut(outfile);
-
-            //initize block header
-            uint hdrpos = outfile.getPos();
-            outfile.putFour(0);
-            outfile.putFour(0);
-            outfile.putFour(0);
-            outfile.putFour(0);
-            outfile.putFour(0);
-            outfile.putFour(0);
-
-            //write block data
-            uint blockaddr = outfile.getPos();
-            uint blocksize = (uint)blockdata.Count;
-            outfile.putRange(blockdata.ToArray());
-
-            //write import list
-            uint importaddr = outfile.getPos();
-            uint importcount = (uint)imports.Count;
-            foreach (ImportEntry imp in imports)
-            {
-                imp.writeToFile(outfile);
-            }
-
-            //write export list
-            uint exportaddr = outfile.getPos();
-            uint exportcount = (uint)exports.Count;
-            foreach (ExportEntry exp in exports)
-            {
-                exp.writeToFile(outfile);
-            }
-            uint endpos = outfile.getPos();
-
-            //go back and adjust block header
-            outfile.seek(hdrpos);
-            outfile.putFour(blockaddr);
-            outfile.putFour(blocksize);
-            outfile.putFour(importaddr);
-            outfile.putFour(importcount);
-            outfile.putFour(exportaddr);
-            outfile.putFour(exportcount);
-            outfile.seek(endpos);
-        }
-
-        public override void dumpSection(StreamWriter txtout)
-        {
-            base.dumpSection(txtout);
-
-            int i = 0;
-            if (blockdata.Count > 0)
-            {
-                txtout.Write("{0}: ", i.ToString("X4"));
-                while (i < blockdata.Count)
-                {
-                    txtout.Write("{0} ", blockdata[i].ToString("X2"));
-                    i++;
-                    if (i % 16 == 0)
-                    {
-                        txtout.WriteLine();
-                        txtout.Write("{0}: ", i.ToString("X4"));
-                    }
-                }
-                txtout.WriteLine();
-            }
-            else
-            {
-                txtout.WriteLine("no data");
-            }
-
-            txtout.WriteLine();
-            txtout.WriteLine("IMPORTS");
-            txtout.WriteLine("-------");
-            if (imports.Count == 0)
-            {
-                txtout.WriteLine("none");
-            }
-            else
-            {
-                foreach (ImportEntry imp in imports)
-                {
-                    txtout.WriteLine(imp.ToString());
-                }
-            }
-
-            txtout.WriteLine();
-            txtout.WriteLine("EXPORTS");
-            txtout.WriteLine("-------");
-            if (exports.Count == 0)
-            {
-                txtout.WriteLine("none");
-            }
-            else
-            {
-                foreach (ExportEntry exp in exports)
-                {
-                    txtout.WriteLine(exp.ToString());
-                }
-            }
         }
     }
 }
