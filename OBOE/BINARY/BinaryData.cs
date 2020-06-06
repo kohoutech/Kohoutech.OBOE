@@ -1,5 +1,5 @@
 ﻿/* ----------------------------------------------------------------------------
-Kohoutech OBOE Library
+Kohoutech Binary Library
 Copyright (C) 1998-2020  George E Greaney
 
 This program is free software; you can redistribute it and/or
@@ -23,20 +23,22 @@ using System.Linq;
 using System.Text;
 using System.IO;
 
-namespace Kohoutech.OBOE
+namespace Kohoutech.Binary
 {
 
-    //- reading in ----------------------------------------------------------------
+    //---------------------------------------------------------------------
+    // READING IN
+    //---------------------------------------------------------------------
 
-    public class SourceFile
+    public class BinaryIn
     {
         String filename;
         byte[] srcbuf;
         uint srclen;
         uint srcpos;
-        
+
         //for reading fields from a disk file
-        public SourceFile(String _filename)
+        public BinaryIn(String _filename)
         {
             filename = _filename;
             srcbuf = File.ReadAllBytes(filename);
@@ -44,8 +46,7 @@ namespace Kohoutech.OBOE
             srcpos = 0;
         }
 
-        //for reading fields from a data buf
-        public SourceFile(byte[] data)
+        public BinaryIn(byte[] data)
         {
             filename = null;
             srcbuf = data;
@@ -140,9 +141,11 @@ namespace Kohoutech.OBOE
         }
     }
 
-    //- writing out ---------------------------------------------------------------
+    //---------------------------------------------------------------------
+    // WRITING OUT
+    //---------------------------------------------------------------------
 
-    public class OutputFile
+    public class BinaryOut
     {
         static uint INITIAL_SIZE = 0x200;
         static uint SIZE_DELTA = 0x2000;
@@ -153,13 +156,18 @@ namespace Kohoutech.OBOE
         uint outpos;
         uint maxlen;
 
+        //for write fields to a data buf
+        public BinaryOut() : this(null)
+        {
+        }
+
         //for writing fields to a disk file
-        public OutputFile(String _filename)
+        public BinaryOut(String _filename)
             : this(_filename, INITIAL_SIZE)
         {
         }
 
-        public OutputFile(String _filename, uint filelen)
+        public BinaryOut(String _filename, uint filelen)
         {
             filename = _filename;
             outlen = filelen;
@@ -283,7 +291,7 @@ namespace Kohoutech.OBOE
             outpos = pos;
         }
 
-        public void writeOut()
+        public byte[] getData()
         {
             //remove unused space at end of file
             //any padding needed at end of file should be already handled by caller
@@ -293,7 +301,12 @@ namespace Kohoutech.OBOE
                 Array.Copy(outbuf, newbuf, maxlen);
                 outbuf = newbuf;
             }
-            File.WriteAllBytes(filename, outbuf);
+            return outbuf;
+        }
+
+        public void writeOut()
+        {
+            File.WriteAllBytes(filename, getData());
         }
     }
 }

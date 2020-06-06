@@ -41,13 +41,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BINARY\BinaryData.cs" />
     <Compile Include="ExportEntry.cs" />
-    <Compile Include="FileIO.cs" />
     <Compile Include="ImportEntry.cs" />
     <Compile Include="Oboe.cs" />
+    <Compile Include="OboeBlock.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResourceTable.cs" />
     <Compile Include="Section.cs" />
+    <Compile Include="Win32\CoffSection.cs" />
     <Compile Include="Win32\Win32Exe.cs" />
     <Compile Include="Win32\Win32Obj.cs" />
   </ItemGroup>
