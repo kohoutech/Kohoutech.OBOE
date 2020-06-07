@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Kohoutech.Binary;
+
 //Win32 COFF object file
 
 //https://docs.microsoft.com/en-us/windows/desktop/debug/pe-format
@@ -79,7 +81,7 @@ namespace Kohoutech.OBOE
             return result.ToString();
         }
 
-        public static void loadSymbols(SourceFile source, uint count, byte[] strtbl, Win32Obj objfile)
+        public static void loadSymbols(BinaryIn source, uint count, byte[] strtbl, Win32Obj objfile)
         {
             for (int i = 0; i < count;)
             {
@@ -196,7 +198,7 @@ namespace Kohoutech.OBOE
             }
         }
 
-        public static void loadRelocations(SourceFile source, CoffSection sec, Win32Obj objfile)
+        public static void loadRelocations(BinaryIn source, CoffSection sec, Win32Obj objfile)
         {            
             source.seek(sec.relocTblPos);
             for (int i = 0; i < sec.relocTblCount; i++)
@@ -238,7 +240,7 @@ namespace Kohoutech.OBOE
         public static Win32Obj readFromFile(String filename)
         {
             Win32Obj objfile = new Win32Obj(filename);
-            SourceFile source = new SourceFile(filename);
+            BinaryIn source = new BinaryIn(filename);
 
             //coff header
             objfile.machine = (MachineType)source.getTwo();
@@ -317,7 +319,7 @@ namespace Kohoutech.OBOE
 
         //- writing out ---------------------------------------------------------------
 
-        public void writeCoffHeader(OutputFile outfile)
+        public void writeCoffHeader(BinaryOut outfile)
         {
             //outfile.putTwo((uint)machine);
             //outfile.putTwo((uint)sections.Count);
@@ -328,7 +330,7 @@ namespace Kohoutech.OBOE
             //outfile.putTwo((uint)characteristics);
         }
 
-        public void writeSectionTable(OutputFile outfile)
+        public void writeSectionTable(BinaryOut outfile)
         {
             for (int i = 0; i < sections.Count; i++)
             {
@@ -336,7 +338,7 @@ namespace Kohoutech.OBOE
             }
         }
 
-        public void writeSectionData(OutputFile outfile)
+        public void writeSectionData(BinaryOut outfile)
         {
             for (int i = 0; i < sections.Count; i++)
             {
@@ -344,7 +346,7 @@ namespace Kohoutech.OBOE
             }
         }
 
-        public void writeSymbolTable(OutputFile outfile)
+        public void writeSymbolTable(BinaryOut outfile)
         {
             for (int i = 0; i < symbols.Count; i++)
             {
@@ -352,7 +354,7 @@ namespace Kohoutech.OBOE
             }
         }
 
-        public void writeStringTable(OutputFile outfile)
+        public void writeStringTable(BinaryOut outfile)
         {
             //uint tblSize = 4;
             //for (int i = 0; i < stringTbl.Count; i++)
@@ -395,7 +397,7 @@ namespace Kohoutech.OBOE
             //}
 
             //now we have the size of the .obj file, write it out to disk
-            OutputFile outfile = new OutputFile(filename, filepos);
+            BinaryOut outfile = new BinaryOut(filename, filepos);
             writeCoffHeader(outfile);
             writeSectionTable(outfile);
             writeSectionData(outfile);
@@ -523,7 +525,7 @@ namespace Kohoutech.OBOE
             size = 0;
         }
 
-        public void writeSymbol(OutputFile outfile)
+        public void writeSymbol(BinaryOut outfile)
         {
             //if (namePos == -1)
             //{

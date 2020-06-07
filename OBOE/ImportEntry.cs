@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Kohoutech.Binary;
+
 namespace Kohoutech.OBOE
 {
     public class ImportEntry
@@ -45,12 +47,21 @@ namespace Kohoutech.OBOE
             typ = _typ;
         }
 
-        internal void writeToFile(OutputFile modfile)
+        public static ImportEntry loadFromFile(BinaryIn infile)
         {
-            modfile.putString(name);
-            modfile.putFour((uint)addr);
-            int b = (typ == IMPORTTYPE.DIR32) ? 0 : 1;
-            modfile.putOne((uint)b);
+            string name = infile.getAsciiZString();
+            uint addr = infile.getFour();
+            uint b = infile.getOne();
+            ImportEntry imp = new ImportEntry(name, addr, (IMPORTTYPE)b);
+            return imp;            
+        }
+
+        public void writeToFile(BinaryOut outfile)
+        {
+            outfile.putString(name);
+            outfile.putFour((uint)addr);
+            //int b = (typ == IMPORTTYPE.DIR32) ? 0 : 1;
+            outfile.putOne((uint)typ);
         }
 
         public override string ToString()

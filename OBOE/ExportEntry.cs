@@ -22,14 +22,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Kohoutech.Binary;
+
 namespace Kohoutech.OBOE
 {
     public class ExportEntry
     {
         public string name;
-        public int addr;
+        public uint addr;
 
-        public ExportEntry(string _name, int _addr)
+        public ExportEntry(string _name, uint _addr)
         {
             int spidx = _name.IndexOf(' ');
             if (spidx != -1)
@@ -41,7 +43,15 @@ namespace Kohoutech.OBOE
             addr = _addr;
         }
 
-        internal void writeToFile(OutputFile modfile)
+        public static ExportEntry loadFromFile(BinaryIn infile)
+        {
+            string name = infile.getAsciiZString();
+            uint addr = infile.getFour();
+            ExportEntry exp = new ExportEntry(name, addr);
+            return exp;
+        }
+
+        public void writeToFile(BinaryOut modfile)
         {
             modfile.putString(name);
             modfile.putFour((uint)addr);
@@ -50,6 +60,11 @@ namespace Kohoutech.OBOE
         public override string ToString()
         {
             return String.Format("{0}: {1}", addr.ToString("X4"), name);
+        }
+
+        internal static int sortByAddress(ExportEntry x, ExportEntry y)
+        {
+            return x.addr.CompareTo(y.addr);
         }
     }
 

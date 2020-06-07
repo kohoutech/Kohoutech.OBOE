@@ -25,6 +25,8 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
 
+using Kohoutech.Binary;
+
 namespace Kohoutech.OBOE
 {
     public class OboeBlock : Section
@@ -46,9 +48,46 @@ namespace Kohoutech.OBOE
             exports = new List<ExportEntry>();
         }
 
+        //- reading in --------------------------------------------------------
+
+        internal static OboeBlock loadSection(BinaryIn infile, uint secaddr, uint secsize, uint sectype)
+        {
+            infile.seek(secaddr);
+            String blockname = infile.getAsciiZString();
+            OboeBlock block = new OboeBlock(blockname, sectype);
+            uint blockaddr = infile.getFour();
+            uint blocksize = infile.getFour();
+            uint importaddr = infile.getFour();
+            uint importcount = infile.getFour();
+            uint exportaddr = infile.getFour();
+            uint exportcount = infile.getFour();
+
+            //block data
+            infile.seek(blockaddr);
+            block.blockdata = new List<byte>(infile.getRange(blocksize));
+
+            //import list
+            infile.seek(importaddr);
+            for(int i = 0; i < importcount; i++)
+            {
+                ImportEntry imp = ImportEntry.loadFromFile(infile);
+                block.imports.Add(imp);
+            }
+
+            //export list
+            infile.seek(exportaddr);
+            for (int i = 0; i < exportcount; i++)
+            {
+                ExportEntry exp = ExportEntry.loadFromFile(infile);
+                block.exports.Add(exp);
+            }
+
+            return block;
+        }
+
         //- writing out -------------------------------------------------------
 
-        public override void writeOut(OutputFile outfile)
+        public override void writeOut(BinaryOut outfile)
         {
             base.writeOut(outfile);
 
@@ -154,13 +193,44 @@ namespace Kohoutech.OBOE
         public static uint BSSBLOCK = 1003;
 
         //data vals
-        public int bssSize;
+        public uint bssSize;
         public List<ExportEntry> exports;
 
         public BSSBlock() : base("BSS", BSSBLOCK)
         {
             bssSize = 0;
             exports = new List<ExportEntry>();
+        }
+
+        internal static Section loadSection(BinaryIn infile, uint secaddr, uint secsize)
+        {
+            infile.seek(secaddr);
+            String blockname = infile.getAsciiZString();
+            BSSBlock block = new BSSBlock();
+            block.bssSize = infile.getFour();
+            uint exportcount = infile.getFour();
+
+            //export list
+            for (int i = 0; i < exportcount; i++)
+            {
+                ExportEntry exp = ExportEntry.loadFromFile(infile);
+                block.exports.Add(exp);
+            }
+
+            return block;
+        }
+
+        public override void writeOut(BinaryOut outfile)
+        {
+            base.writeOut(outfile);
+            outfile.putFour(bssSize);
+            outfile.putFour((uint)exports.Count);
+
+            //write export list
+            foreach (ExportEntry exp in exports)
+            {
+                exp.writeToFile(outfile);
+            }
         }
 
         public override void dumpSection(StreamWriter txtout)

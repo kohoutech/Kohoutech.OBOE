@@ -17,13 +17,15 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 ----------------------------------------------------------------------------*/
 
+//OBOE - Origami Binary for Objects and Executables
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.IO;
 
-//OBOE - Origami Binary for Objects and Executables
+using Kohoutech.Binary;
 
 namespace Kohoutech.OBOE
 {
@@ -36,7 +38,7 @@ namespace Kohoutech.OBOE
         public int extHdrSize;
         public List<Section> sections;
 
-        public Oboe(string name)
+        public Oboe()
         {
             sig = "OBOE";
             extHdrSize = 0;
@@ -51,14 +53,55 @@ namespace Kohoutech.OBOE
 
         //- writing out to file -----------------------------------------------
 
+        public static Oboe loadFromFile(string inname)
+        {
+            BinaryIn infile = new BinaryIn(inname);
+            Oboe oboe = new Oboe();
+
+            string sig = infile.getAsciiString(4);
+            uint exrHdrSize = infile.getFour();
+            uint secCount = infile.getFour();
+
+            Section sec = null;
+            for (int i = 0; i < secCount; i++)
+            {
+                uint sectype = infile.getFour();
+                uint secaddr = infile.getFour();
+                uint secsize = infile.getFour();
+                uint hdrpos = infile.getPos();
+                switch(sectype)
+                {
+                    case 1000:
+                    case 1001:
+                    case 1002:
+                        sec = OboeBlock.loadSection(infile, secaddr, secsize, sectype);
+                        oboe.addSection(sec);
+                        break;
+
+                    case 1003:
+                        sec = BSSBlock.loadSection(infile, secaddr, secsize);
+                        oboe.addSection(sec);
+                        break;
+
+                    default:
+                        break;
+                }
+                infile.seek(hdrpos);
+            }
+
+            return oboe;
+        }
+
+        //- writing out to file -----------------------------------------------
+
         public void writeOboeFile(String outname)
         {
-            OutputFile outfile = new OutputFile(outname);
+            BinaryOut outfile = new BinaryOut(outname);
             this.writeOboeFile(outfile);
             outfile.writeOut();
         }
 
-        public void writeOboeFile(OutputFile outfile)
+        public void writeOboeFile(BinaryOut outfile)
         {
             //write header
             outfile.putFixedString(sig, 4);
@@ -92,7 +135,7 @@ namespace Kohoutech.OBOE
         }
 
         //for subclasses to add their own specific header fields
-        public virtual void writeExtendedHeader(OutputFile outfile)
+        public virtual void writeExtendedHeader(BinaryOut outfile)
         {
 
         }

@@ -24,6 +24,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.IO;
 
+using Kohoutech.Binary;
+
 namespace Kohoutech.OBOE
 {
     //section base class
@@ -32,7 +34,7 @@ namespace Kohoutech.OBOE
         public int num;             //section's pos in the section table
         public string name;
         public uint sectype;
-        public uint addr;           //for storage
+        public uint addr;           //for storage & linkage
         public uint size;
 
         //cons
@@ -45,7 +47,7 @@ namespace Kohoutech.OBOE
             size = 0;
         }
 
-        public virtual void writeOut(OutputFile outfile)
+        public virtual void writeOut(BinaryOut outfile)
         {
             outfile.putString(name);            
         }
