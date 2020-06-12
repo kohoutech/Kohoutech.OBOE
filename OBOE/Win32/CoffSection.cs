@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using Kohoutech.Binary;
+
 //https://en.wikibooks.org/wiki/X86_Disassembly/Windows_Executable_Files#Section_Table
 //https://docs.microsoft.com/en-us/windows/win32/debug/pe-format#section-table-section-headers
 
@@ -34,7 +36,7 @@ namespace Kohoutech.OBOE
         public int secNum;
         public String name;
 
-        SectionSettings settings;
+        public SectionSettings settings;
 
         public uint memPos;                 //section addr in memory
         public uint memSize;                //section size in memory
@@ -74,8 +76,6 @@ namespace Kohoutech.OBOE
             settings = _settings;
         }
 
-        //- reading in ----------------------------------------------------------------
-
         public void resetData()
         {
             data.Clear();
@@ -88,9 +88,38 @@ namespace Kohoutech.OBOE
             return addr;
         }
 
+        //- reading in ----------------------------------------------------------------
+
+        public static CoffSection readSection(BinaryIn source)
+        {
+            string name = source.getAsciiString(8);
+            CoffSection sec = new CoffSection(name);
+            sec.memSize = source.getFour();
+            sec.memPos = source.getFour();
+            sec.fileSize = source.getFour();
+            sec.filePos = source.getFour();
+
+            sec.relocTblPos = source.getFour();
+            uint skip1 = source.getFour();              //line numbers are deprecated
+            sec.relocTblCount = source.getTwo();
+            uint skip2 = source.getTwo();
+
+            uint flagval = source.getFour();
+            sec.settings = SectionSettings.decodeFlags(flagval);
+
+            uint mark = source.getPos();
+            source.seek(sec.filePos);
+            byte[] secdata = source.getRange(sec.fileSize);
+            sec.data = new List<byte>(secdata);
+            source.seek(mark);
+
+            return sec;
+        }
+
+
         //- writing out ---------------------------------------------------------------
 
-        public void writeSectionTblEntry(OutputFile outfile)
+        public void writeSectionTblEntry(BinaryOut outfile)
         {
             outfile.putFixedString(name, 8);
 
@@ -105,12 +134,11 @@ namespace Kohoutech.OBOE
             outfile.putTwo((uint)relocations.Count);
             outfile.putTwo(0);
 
-            //uint flagval = (uint)flags;
-            //flagval = flagval | ((uint)dataAlignment << 20);
-            //outfile.putFour(flagval);
+            uint flagval = settings.encodeFlags();
+            outfile.putFour(flagval);
         }
 
-        public void writeSectionData(OutputFile outfile)
+        public void writeSectionData(BinaryOut outfile)
         {
             uint pos = outfile.getPos();
             outfile.putRange(data.ToArray());
@@ -164,7 +192,7 @@ namespace Kohoutech.OBOE
             settings.hasGPRel = (flags & 0x8000) != 0;
             settings.hasExtRelocs = (flags & 0x01000000) != 0;
             settings.canDiscard = (flags & 0x02000000) != 0;
-            settings.dontCache = (flags & 0x04000000) != 0; 
+            settings.dontCache = (flags & 0x04000000) != 0;
             settings.notPageable = (flags & 0x08000000) != 0;
             settings.canShare = (flags & 0x10000000) != 0;
             settings.canExecute = (flags & 0x20000000) != 0;
@@ -174,6 +202,28 @@ namespace Kohoutech.OBOE
             settings.dataAlignment = DATAALIGNMENTS[(flags & 0x00F00000) >> 20];
 
             return settings;
+        }
+
+        public uint encodeFlags()
+        {
+            uint flags = 0;
+            if (hasCode) { flags |= 0x20; }
+            if (hasInitData) { flags |= 0x40; }
+            if (hasUninitData) { flags |= 0x80; }
+            if (hasInfo) { flags |= 0x200; }
+            if (willRemove) { flags |= 0x800; }
+            if (hasComdat) { flags |= 0x1000; }
+            if (hasGPRel) { flags |= 0x8000; }
+            if (hasExtRelocs) { flags |= 0x01000000; }
+            if (canDiscard) { flags |= 0x02000000; }
+            if (dontCache) { flags |= 0x04000000; }
+            if (notPageable) { flags |= 0x08000000; }
+            if (canShare) { flags |= 0x10000000; }
+            if (canExecute) { flags |= 0x20000000; }
+            if (canRead) { flags |= 0x40000000; }
+            if (canWrite) { flags |= 0x80000000; }
+            flags |= ((uint)dataAlignment << 20);
+            return flags;
         }
 
         public SectionSettings()
@@ -193,7 +243,7 @@ namespace Kohoutech.OBOE
             canExecute = false;
             canRead = false;
             canWrite = false;
-            dataAlignment = 1;
+            dataAlignment = 0;
         }
     }
 
@@ -222,14 +272,14 @@ namespace Kohoutech.OBOE
             type = _type;
         }
 
-        //public void writeToFile(OutputFile outfile)
+        //public void writeToFile(BinaryOut outfile)
         //{
         //    outfile.putFour(address);
         //    outfile.putFour(symTblIdx);
         //    outfile.putTwo((uint)type);
         //}
 
-        public static void write(OutputFile outfile, uint pos)
+        public static void write(BinaryOut outfile, uint pos)
         {
             //not implemented yet
         }

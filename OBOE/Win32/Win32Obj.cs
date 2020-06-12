@@ -31,6 +31,8 @@ using Kohoutech.Binary;
 namespace Kohoutech.OBOE
 {
     //base class for both object and executable files
+    //this exists so coff sections can point to owner for both obj / exe files
+    //in time, common fields _may_ be moved here
     public class Win32Coff
     {
     }
