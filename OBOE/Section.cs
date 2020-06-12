@@ -47,6 +47,11 @@ namespace Kohoutech.OBOE
             size = 0;
         }
 
+        public virtual Section readIn(BinaryIn infile, uint secsize)
+        {
+            return null;
+        }
+
         public virtual void writeOut(BinaryOut outfile)
         {
             outfile.putString(name);            

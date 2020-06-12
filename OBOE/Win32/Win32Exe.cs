@@ -246,6 +246,7 @@ namespace Kohoutech.OBOE
                 CoffSection sec = CoffSection.readSection(source);
                 sec.owner = this;
                 sec.secNum = i + 1;
+                sections.Add(sec);
             }
         }
 

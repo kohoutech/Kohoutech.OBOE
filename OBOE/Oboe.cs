@@ -19,6 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 //OBOE - Origami Binary for Objects and Executables
 
+//
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,23 +28,29 @@ using System.Text;
 using System.IO;
 
 using Kohoutech.Binary;
+using System.ComponentModel.Design.Serialization;
+using System.Reflection;
 
 namespace Kohoutech.OBOE
 {
     public class Oboe
     {
+        public const string OBOESIG = "OBOE";
         public const int SECTIONENTRYSIZE = 12;
 
-        //header vals
-        public string sig;
-        public int extHdrSize;
         public List<Section> sections;
+        public static Dictionary<uint, Section> loaders;
 
         public Oboe()
         {
-            sig = "OBOE";
-            extHdrSize = 0;
             sections = new List<Section>();
+        }
+
+        //- section mgmt ------------------------------------------------------
+
+        public static void registerSectionLoader(uint sectype, Section section)
+        {
+            loaders.Add(sectype, section);
         }
 
         public void addSection(Section sec)
@@ -51,42 +59,42 @@ namespace Kohoutech.OBOE
             sec.num = sections.Count;
         }
 
-        //- writing out to file -----------------------------------------------
+        //- reading in from file -----------------------------------------------
 
         public static Oboe loadFromFile(string inname)
         {
             BinaryIn infile = new BinaryIn(inname);
             Oboe oboe = new Oboe();
 
-            string sig = infile.getAsciiString(4);
-            uint exrHdrSize = infile.getFour();
-            uint secCount = infile.getFour();
-
-            Section sec = null;
-            for (int i = 0; i < secCount; i++)
+            try
             {
-                uint sectype = infile.getFour();
-                uint secaddr = infile.getFour();
-                uint secsize = infile.getFour();
-                uint hdrpos = infile.getPos();
-                switch(sectype)
+                string sig = infile.getAsciiString(4);
+                if (!sig.Equals(OBOESIG))
                 {
-                    case 1000:
-                    case 1001:
-                    case 1002:
-                        sec = OboeBlock.loadSection(infile, secaddr, secsize, sectype);
-                        oboe.addSection(sec);
-                        break;
-
-                    case 1003:
-                        sec = BSSBlock.loadSection(infile, secaddr, secsize);
-                        oboe.addSection(sec);
-                        break;
-
-                    default:
-                        break;
+                    throw new OboeFormatException("this is not a valid OBOE file");
                 }
-                infile.seek(hdrpos);
+                uint secCount = infile.getFour();
+
+                for (int i = 0; i < secCount; i++)
+                {
+                    uint sectype = infile.getFour();
+                    uint secaddr = infile.getFour();
+                    uint secsize = infile.getFour();
+                    uint hdrpos = infile.getPos();
+
+                    //ignore any section types we don't recognize
+                    if (loaders.ContainsKey(sectype))
+                    {
+                        infile.seek(secaddr);
+                        Section sec = loaders[sectype].readIn(infile, secsize);
+                        oboe.addSection(sec);
+                        infile.seek(hdrpos);
+                    }
+                }
+            }
+            catch(BinaryReadException)
+            {
+                throw new OboeFormatException("this is not a valid OBOE file");
             }
 
             return oboe;
@@ -104,10 +112,8 @@ namespace Kohoutech.OBOE
         public void writeOboeFile(BinaryOut outfile)
         {
             //write header
-            outfile.putFixedString(sig, 4);
-            outfile.putFour((uint)extHdrSize);
+            outfile.putFixedString(OBOESIG, 4);
             outfile.putFour((uint)sections.Count);
-            writeExtendedHeader(outfile);
 
             //write initial section tbl
             uint sectblsize = (uint)(sections.Count * SECTIONENTRYSIZE);
@@ -134,19 +140,14 @@ namespace Kohoutech.OBOE
             }
         }
 
-        //for subclasses to add their own specific header fields
-        public virtual void writeExtendedHeader(BinaryOut outfile)
-        {
-
-        }
+        //- text representation -----------------------------------------------
 
         public void dumpOboeFile(string dumpname)
         {
             //print out text file report for error checking
             StreamWriter txtout = File.CreateText(dumpname);
 
-            txtout.WriteLine("signature: {0}",sig);
-            txtout.WriteLine("extended header size: {0}",extHdrSize.ToString("X4"));
+            txtout.WriteLine("signature: {0}", OBOESIG);
             txtout.WriteLine();
             txtout.WriteLine("section count: {0}", sections.Count.ToString());
             foreach (Section sec in sections)
@@ -156,6 +157,16 @@ namespace Kohoutech.OBOE
             }
             txtout.Flush();
             txtout.Close();
+        }
+    }
+
+    //- error handling ------------------------------------------------------------
+
+    class OboeFormatException : Exception
+    {
+        public OboeFormatException(string message)
+            : base(message)
+        {
         }
     }
 }

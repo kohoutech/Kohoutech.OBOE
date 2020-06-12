@@ -41,7 +41,14 @@ namespace Kohoutech.Binary
         public BinaryIn(String _filename)
         {
             filename = _filename;
-            srcbuf = File.ReadAllBytes(filename);
+            try
+            {
+                srcbuf = File.ReadAllBytes(filename);
+            }
+            catch (Exception e)
+            {
+                throw new BinaryReadException("error reading binary file " + filename);
+            }
             srclen = (uint)srcbuf.Length;
             srcpos = 0;
         }
@@ -59,8 +66,17 @@ namespace Kohoutech.Binary
             return srcpos;
         }
 
+        public void checkData(uint len)
+        {
+            if (srcpos + len >= srclen)
+            {
+                throw new BinaryReadException("error reading binary data");
+            }
+        }
+
         public byte[] getRange(uint len)
         {
+            checkData(len);
             byte[] result = new byte[len];
             Array.Copy(srcbuf, srcpos, result, 0, len);
             srcpos += len;
@@ -69,6 +85,7 @@ namespace Kohoutech.Binary
 
         public byte[] getRange(uint ofs, uint len)
         {
+            checkData(ofs + len);
             byte[] result = new byte[len];
             Array.Copy(srcbuf, ofs, result, 0, len);
             return result;
@@ -77,6 +94,7 @@ namespace Kohoutech.Binary
         //little endian unsigned int values
         public uint getOne()
         {
+            checkData(1);
             byte a = srcbuf[srcpos++];
             uint result = (uint)(a);
             return result;
@@ -84,6 +102,7 @@ namespace Kohoutech.Binary
 
         public uint getTwo()
         {
+            checkData(2);
             byte b = srcbuf[srcpos++];
             byte a = srcbuf[srcpos++];
             uint result = (uint)a * 256 + b;
@@ -92,6 +111,7 @@ namespace Kohoutech.Binary
 
         public uint getFour()
         {
+            checkData(4);
             byte d = srcbuf[srcpos++];
             byte c = srcbuf[srcpos++];
             byte b = srcbuf[srcpos++];
@@ -103,16 +123,14 @@ namespace Kohoutech.Binary
         }
 
         //fixed len string
-        public String getAsciiString(int width)
+        public String getAsciiString(uint width)
         {
+            checkData(width);
             String result = "";
             for (int i = 0; i < width; i++)
             {
                 byte a = srcbuf[srcpos++];
-                if ((a >= 0x20) && (a <= 0x7E))
-                {
-                    result += (char)a;
-                }
+                result += (char)a;
             }
             return result;
         }
@@ -121,10 +139,12 @@ namespace Kohoutech.Binary
         public String getAsciiZString()
         {
             String result = "";
+            checkData(1);
             byte a = srcbuf[srcpos++];
             while (a != '\0')
             {
                 result = result + (char)a;
+                checkData(1);
                 a = srcbuf[srcpos++];
             }
             return result;
@@ -132,14 +152,28 @@ namespace Kohoutech.Binary
 
         public void skip(uint delta)
         {
+            checkData(1);
             srcpos += delta;
         }
 
         public void seek(uint pos)
         {
+            if (pos > srcpos)
+            {
+                checkData(pos - srcpos);
+            }
             srcpos = pos;
         }
     }
+
+    public class BinaryReadException : Exception
+    {
+        public BinaryReadException(string message)
+            : base(message)
+        {
+        }
+    }
+
 
     //---------------------------------------------------------------------
     // WRITING OUT
